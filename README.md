@@ -5,7 +5,8 @@ from `posts/your_posts_n.json` files in personal archives exported from
 Facebook. That should make it easier to extricate your content and also yourself
 from the social network. Doing so matters because Facebook is an imminent threat
 to human rights and democracy all over the world. I presented the
-(dispassionate) case against Facebook as an invited talk at
+(dispassionate) [case against Facebook](https://youtu.be/iYJQSfQGDEE) as an
+invited talk at
 [Rebase](http://rebase-conf.org/2020/#technology-today-a-paucity-of-integrity-and-imagination)/[SPLASH](https://2020.splashcon.org)
 in November 2020.
 
