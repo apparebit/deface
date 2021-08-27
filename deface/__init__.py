@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Clean and consolidate your posts exported from Facebook"""
+"""Liberate your posts from Facebook"""
 __version__ = "1.0.0"
