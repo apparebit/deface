@@ -21,6 +21,9 @@ import sys
 from types import MethodType
 from typing import Union
 
+def _sgr(_, code: str) -> str:
+  f'\x1b[{code}m'
+
 def _default(value):
   if isinstance(value, enum.Enum):
     return value.name
@@ -30,12 +33,12 @@ def _default(value):
     return value
 
 class Logger:
-  def __init__(self, stream: io.TextIOBase = sys.stderr):
+  def __init__(self, stream: io.TextIO = sys.stderr):
     self._line_count: int = 0
     self._error_count: int = 0
-    self._stream: io.TextIOBase = stream
+    self._stream: io.TextIO = stream
     if stream.isatty():
-      self._sgr = MethodType(lambda self, code: f'\x1b[{code}m', self)
+      self._sgr = MethodType(_sgr, self) # type: ignore
 
   def _print(self, text: str = '') -> None:
     self._line_count += text.count('\n') + 1
@@ -44,25 +47,25 @@ class Logger:
   def _sgr(self, _: str) -> str:
     return ''
 
-  def _print_bold(self, text: str) -> str:
+  def _print_bold(self, text: str) -> None:
     self._print(self._sgr('1') + text + self._sgr('22'))
 
-  def _print_in_green(self, text: str) -> str:
+  def _print_in_green(self, text: str) -> None:
     self._print(self._sgr('32;4;1') + text + self._sgr('39;22'))
     self._print(self._sgr('42') + (' ' * len(text)) + self._sgr('49'))
 
-  def _print_in_red(self, text: str) -> str:
+  def _print_in_red(self, text: str) -> None:
     self._print(self._sgr('31;1') + text + self._sgr('39;22'))
     self._print(self._sgr('41') + (' ' * len(text)) + self._sgr('49'))
 
-  def _print_object(self, value):
+  def _print_object(self, value) -> None:
     self._print(json.dumps(value, default=_default, indent=2))
 
   @property
-  def error_count(self):
+  def error_count(self) -> int:
     return self._error_count
 
-  def error(self, err: Union[str, Exception]):
+  def error(self, err: Union[str, Exception]) -> None:
     self._error_count += 1
     starting_line = self._line_count
 
