@@ -115,15 +115,19 @@ class Post:
   """
 
   tags: tuple[str, ...]
+
+  text: list[str]
+  """The content of a memory."""
+
   timestamp: int
   backdated_timestamp: Optional[int] = None
   event: Optional[Event] = None
 
   external_context: Optional[ExternalContext] = None
-  """An external context usually consists of the URL only."""
+  """An external context, typically with URL only."""
 
   name: Optional[str] = None
-  """A name only appears in recommendations"""
+  """The name for a recommendations."""
 
   post: Optional[str] = None
   title: Optional[str] = None
@@ -167,5 +171,7 @@ class PostHistory:
     else:
       self._posts[post.timestamp] = post
 
-  def list(self) -> list[Post]:
-    return self._posts.values()
+  def posts(self) -> list[Post]:
+    posts = list(self._posts.values())
+    sorted(posts, key=lambda p: p.timestamp)
+    return posts
