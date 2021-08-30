@@ -15,10 +15,11 @@
 import argparse
 
 from deface import __version__
-from deface.json_data import JsonData, read_json
+from deface.jsonio import read_json
 from deface.ingest import ingest_into_history
 from deface.logger import Logger
 from deface.model import PostHistory
+from deface.validator import Validator
 
 def main():
   prog = 'deface'
@@ -39,13 +40,13 @@ def main():
       logger.error(err)
       continue
 
-    data = JsonData(json_data, filename=filename)
-    errors = ingest_into_history(data, history)
-
+    wrapped_data = Validator(json_data, filename=filename)
+    errors = ingest_into_history(wrapped_data, history)
     for err in errors:
       logger.error(err)
 
-  sign_off = f'Ingested {len(history.list())} posts'
+  posts = history.posts()
+  sign_off = f'Ingested {len(posts)} posts'
   if logger.error_count > 0:
     sign_off += f', encountered {logger.error_count} errors'
   sign_off += '.'
