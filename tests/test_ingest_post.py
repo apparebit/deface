@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
+from deface.error import ValidationError
 from deface.model import ExternalContext, Location, MediaType
 from deface.ingest import ingest_post
-from deface.json_data import JsonData
+from deface.validator import Validator
 
 def test_ingest_post():
-  data = JsonData({
+  data = Validator({
     "timestamp": 665,
     "attachments": [
       {
@@ -110,7 +113,7 @@ def test_ingest_post():
       "pretty",
       "ugly"
     ]
-  })
+  }, filename='valid-post')
 
   post = ingest_post(data)
 
@@ -162,6 +165,12 @@ def test_ingest_post():
   ),)
   assert post.post == "Ooh pretty!"
   assert post.tags == ("pretty", "ugly")
+  assert len(post.text ) == 0
   assert post.timestamp == 665
   assert post.title == "Photo and Video"
   assert post.update_timestamp == None
+
+def test_fail_validation():
+  with pytest.raises(ValidationError) as exception_info:
+    ingest_post(Validator({ 'timestamp': '665' }, filename='malformed1'))
+  assert exception_info.value.args[0] == 'malformed1.timestamp is not an integer'
