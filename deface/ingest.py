@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import dataclasses
+from typing import Any
 
 from deface.error import DefaceError, MergeError, ValidationError
 from deface.model import (
@@ -22,7 +23,7 @@ from deface.validator import Validator
 
 _COMMENT_KEYS: set[str] = { 'author', 'comment', 'timestamp' }
 
-def ingest_comment(data: Validator) -> Comment:
+def ingest_comment(data: Validator[Any]) -> Comment:
   """
   Ingest the current JSON data value as a comment.
   """
@@ -37,7 +38,7 @@ def ingest_comment(data: Validator) -> Comment:
 
 _EVENT_KEYS = { 'name', 'start_timestamp', 'end_timestamp' }
 
-def ingest_event(data: Validator) -> Event:
+def ingest_event(data: Validator[Any]) -> Event:
   """
   Ingest the current JSON data value as an event.
   """
@@ -52,7 +53,7 @@ def ingest_event(data: Validator) -> Event:
 
 _EXTERNAL_CONTEXT_KEYS = { 'name', 'source', 'url' }
 
-def ingest_external_context(data: Validator) -> ExternalContext:
+def ingest_external_context(data: Validator[Any]) -> ExternalContext:
   """
   Ingest the current JSON data value as an external context.
   """
@@ -70,7 +71,7 @@ def ingest_external_context(data: Validator) -> ExternalContext:
 _LOCATION_KEYS: set[str] = { 'address', 'coordinate', 'name', 'url' }
 _COORDINATE_KEYS: set[str] = { 'latitude', 'longitude' }
 
-def ingest_location(data: Validator) -> Location:
+def ingest_location(data: Validator[Any]) -> Location:
   """
   Ingest the current JSON data value as a location.
   """
@@ -106,14 +107,14 @@ _MEDIA_KEYS: set[str] = {
 
 _METADATA_KEYS: set[str] = { 'photo_metadata', 'video_metadata' }
 
-def ingest_media(data: Validator) -> Media:
+def ingest_media(data: Validator[Any]) -> Media:
   """
   Ingest the current JSON data value as media.
   """
   media_data = data.to_object(valid_keys=_MEDIA_KEYS)
   fields = {}
 
-  comments = []
+  comments: list[Comment] = []
   if 'comments' in media_data.value:
     for comment_data in media_data['comments'].to_list().items():
       comments.append(ingest_comment(comment_data))
@@ -157,11 +158,11 @@ _DATA_KEYS: set[str] = { 'backdated_timestamp', 'post', 'update_timestamp' }
 _POST_KEYS: set[str] = { 'attachments', 'data', 'tags', 'timestamp', 'title' }
 
 def _handle_attachments(
-  data: Validator, fields: dict
+  data: Validator[Any], fields: dict[str, Any]
 ) -> tuple[list[Media], list[Location], list[str]]:
-  all_media = []
-  all_places = []
-  all_text = []
+  all_media: list[Media] = []
+  all_places: list[Location] = []
+  all_text: list[str] = []
 
   for outer_item in data.to_list().items():
     outer_data = outer_item.to_object(valid_keys={'data'}, singleton=True)
@@ -197,21 +198,21 @@ def _handle_attachments(
 
   return all_media, all_places, all_text
 
-def ingest_post(data: Validator) -> Post:
+def ingest_post(data: Validator[Any]) -> Post:
   """
   Ingest the current JSON data value as a post.
   """
   post_data = data.to_object(valid_keys=_POST_KEYS)
-  fields = {}
+  fields: dict[str, Any] = {}
 
   if 'attachments' in post_data.value:
     all_media, all_places, all_text = _handle_attachments(
       post_data['attachments'], fields
     )
   else:
-    all_media = list()
-    all_places = list()
-    all_text = list()
+    all_media: list[Media] = list()
+    all_places: list[Location] = list()
+    all_text: list[str] = list()
 
   if 'data' in post_data.value:
     for item in post_data['data'].to_list().items():
@@ -224,7 +225,7 @@ def ingest_post(data: Validator) -> Post:
       else:
         fields[key] = item_data[key].to_integer().value
 
-  tags = []
+  tags: list[str] = []
   if 'tags' in post_data.value:
     for tag_data in post_data['tags'].to_list().items():
       tags.append(tag_data.to_string().value)
@@ -258,13 +259,13 @@ def ingest_post(data: Validator) -> Post:
   return Post(**fields) # type: ignore
 
 def ingest_into_history(
-  data: Validator, history: PostHistory
+  data: Validator[Any], history: PostHistory
 ) -> list[DefaceError]:
   """
   Ingest the current JSON data value as list of posts into the given history.
   This function returns a list of ingestion errors.
   """
-  errors = []
+  errors: list[DefaceError] = []
   for item_data in data.to_list().items():
     try:
       post = ingest_post(item_data)
