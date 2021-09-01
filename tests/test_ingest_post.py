@@ -14,6 +14,8 @@
 
 import pytest
 
+from typing import Any
+
 from deface.error import ValidationError
 from deface.model import ExternalContext, Location, MediaType
 from deface.ingest import ingest_post
@@ -171,6 +173,7 @@ def test_ingest_post():
   assert post.update_timestamp == None
 
 def test_fail_validation():
-  with pytest.raises(ValidationError) as exception_info:
-    ingest_post(Validator({ 'timestamp': '665' }, filename='malformed1'))
-  assert exception_info.value.args[0] == 'malformed1.timestamp is not an integer'
+  with pytest.raises(ValidationError) as exception_info: # type: ignore
+    ingest_post(Validator[Any]({ 'timestamp': '665' }, filename='malformed1'))
+  msg: str = exception_info.value.args[0] # type: ignore
+  assert msg == 'malformed1.timestamp is not an integer'
