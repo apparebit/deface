@@ -11,16 +11,27 @@ authors = [{ name = "Robert Grimm", email = "apparebit@gmail.com" }]
 classifiers = ["License :: OSI Approved :: Apache Software License"]
 urls = { Source = "https://github.com/apparebit/deface" }
 
+# Build tool extracts description and version from package, reusing the value
+# of top-level docstring and the __version__ variable.
 dynamic = ['description', 'version']
 
+# deface has no runtime dependencies beyond the Python standard library.
 dependencies = []
 
 [project.optional-dependencies]
 test = ["pytest"]
-doc = ["sphinx"]
+doc = [
+  "furo",
+  # https://myst-parser.readthedocs.io/en/latest/ ???
+  "sphinx"
+  #"sphinx-autobuild",
+  #"sphinx-copybutton",
+  #"sphinxext-opengraph"
+]
 
 [project.scripts]
 deface = "deface.cli:main"
 
 [tool.pyright]
 include = ["deface", "tests"]
+typeCheckingMode = 'strict'
