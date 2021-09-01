@@ -80,47 +80,67 @@ class Location:
 
 @dataclasses.dataclass(frozen=True)
 class Media:
-  """
-  A posted photo or video. The ``uri`` is *not* a URL but only a file path into
-  the ``photos_and_videos`` directory of the Facebook data archive.
-  """
+  """A posted photo or video."""
   comments: tuple[Comment, ...]
   media_type: MediaType
   metadata: dict[str, Union[str, int]] = dataclasses.field(compare=False)
+
   uri: str
+  """
+  The absolute path to the photo or video within the personal data archive. In
+  terms of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`, the field
+  provides a *relative reference*, i.e., it lacks a scheme such as ``file:``.
+  """
+
   creation_timestamp: Optional[int] = None
+
   description: Optional[str] = None
+  """
+  deface prioritizes the :py:attr:`deface.model.Post.post` over its media
+  objects' :py:attr:`deface.model.Media.description`. When safe,
+  :py:func:`deface.ingest.ingest_post` hoists the media description into the
+  post body while also deleting redundant media descriptions.
+  """
+
   thumbnail: Optional[str] = None
   title: Optional[str] = None
 
 @dataclasses.dataclass(frozen=True)
 class Post:
-  """
-  A post on Facebook. The most important fields are post's ``timestamp``,
-  ``post`` with the body text, ``media`` describing attached photos and videos,
-  as well as ``external_context`` linking to other websites. deface prioritizes
-  the post body over media objects' ``description`` fields. If it is safe to do,
-  ``ingest_post()`` fills in an empty body from media object descriptions while
-  also deleting redundant media object descriptions.
-  """
+  """A post on Facebook."""
+
   media: tuple[Media, ...]
+  """
+  The photos and videos attached to a post.
+  """
 
   place: tuple[Location, ...]
   """
-  A place. Almost all posts have at most one location. Occasionally, a post has
-  exactly two locations, with both having the same address, latitude, longitude,
-  and name; one having ``None`` for URL; and the other having a URL. In that
-  case, ``ingest_post()`` eliminates the redundant location object (without
-  URL). Posts with two or more distinct locations are rare but do occur.
+  A place. In the original Facebook data, almost all posts have at most one
+  :py:class:`deface.model.Location`. Occasionally, a post has two locations that
+  share the same address, latitude, longitude, and name but differ on
+  :py:attr:`deface.model.Location.url`, with one location having ``None`` and
+  the other having some value. In that case,
+  :py:func:`deface.ingest.ingest_post` eliminates the redundant location object
+  while keeping ``url``'s value. Posts with two or more distinct locations seem
+  rare but do occur.
   """
 
   tags: tuple[str, ...]
+  """The tags for a post, including friends and pages."""
 
   text: list[str]
-  """The content of a memory."""
+  """The text introducing a shared memory."""
 
   timestamp: int
+  """
+  The time a post was made in seconds since the beginning of the Unix epoch
+  (January 1, 1970 at midnight).
+  """
+
   backdated_timestamp: Optional[int] = None
+  """A backdated timestamp. Its semantics are unclear."""
+
   event: Optional[Event] = None
 
   external_context: Optional[ExternalContext] = None
@@ -130,10 +150,29 @@ class Post:
   """The name for a recommendations."""
 
   post: Optional[str] = None
+  """The post's textual body."""
+
   title: Optional[str] = None
+  """
+  The title of a post, which seems to be filled in automatically and hence is of
+  limited use.
+  """
+
   update_timestamp: Optional[int] = None
+  """
+  Nominally, the time of an update. In practice, if a post includes this field,
+  its value appears to be the same as that of ``timestamp``. In other words, the
+  field has devolved to a flag indicating whether a post was updated.
+  """
 
   def merge(self, other: Post) -> Post:
+    """
+    Merge this post with the other post. If the two posts differ only in media
+    objects, this method returns a new post that combines the media objects from
+    both posts. This does remove redundant post data in practice. If the two
+    posts cannot be merge, this method raises a
+    :py:exc:`deface.error.MergeError`.
+    """
     if self == other:
       return self
     elif (

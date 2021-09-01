@@ -22,6 +22,13 @@ from deface.model import PostHistory
 from deface.validator import Validator
 
 def main():
+  """
+  A command line tool to convert Facebook posts from their personal archive
+  format to a simpler, cleaner version. The tool reads in one or more files with
+  possibly overlapping post data, simplifies the structure of the data,
+  eliminates redundant information, reconciles the records into a single
+  timeline, and then exports that timeline of posts as JSON.
+  """
   prog = 'deface'
   version = f'{prog} {__version__}'
   description = 'Clean and consolidate posts exported from Facebook.'
