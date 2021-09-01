@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import dataclasses
+import enum
 import json
 import re
 
 from binascii import unhexlify
-from typing import Union
+from typing import Any, Union
 
 JsonT = Union[None, bool, int, float, str, ]
 
@@ -43,3 +45,19 @@ def read_json(path: str) -> JsonT:
   """
   with open(path, 'rb') as file:
     return json.loads(restore_utf8(file.read()))
+
+def default(value: Any) -> Union[str, dict[str, Any]]:
+  """
+  Convert the given value, which cannot be encoded as JSON, to an equivalent
+  value that can be encoded as JSON. This function returns the name of enum
+  constants and the equivalent dictionary for dataclasses. For all other values,
+  it raises a :py:class:`TypeError`.
+  """
+  if isinstance(value, enum.Enum):
+    return value.name
+  elif dataclasses.is_dataclass(value):
+    return dataclasses.asdict(value)
+  raise TypeError(f'Value "{value}" cannot be encoded as JSON')
+
+def dumps(value: Any, **kwargs: Any) -> str:
+  return json.dumps(value, default=default, **kwargs)

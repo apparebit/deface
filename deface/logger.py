@@ -12,78 +12,114 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import dataclasses
 import enum
-import io
-import json
 import sys
 
+from deface import jsonio
 from types import MethodType
-from typing import Union
+from typing import Any, TextIO, Union
+
+def pluralize(count: int, noun: str, suffix: str = 's') -> str:
+  return noun + suffix if count != 1 else noun
 
 def _sgr(_, code: str) -> str:
-  f'\x1b[{code}m'
+  return f'\x1b[{code}m'
 
-def _default(value):
-  if isinstance(value, enum.Enum):
-    return value.name
-  elif dataclasses.is_dataclass(value):
-    return dataclasses.asdict(value)
-  else:
-    return value
+class Level(enum.Enum):
+  ERROR = '❌ '
+  WARN = '⚠️ '
+  INFO = ''
 
 class Logger:
-  def __init__(self, stream: io.TextIO = sys.stderr):
+  """
+  A simple console logger. By default, the logger prefixes messages with
+  appropriate emoji. If the underlying ``stream`` is a TTY, it also uses ANSI
+  escape codes to style messages.
+
+  :param stream: The stream to write to, which defaults to standard error.
+  :param use_emoji: The flag for using emoji, which defaults to ``True``.
+  """
+  def __init__(self, stream: TextIO = sys.stderr, use_emoji: bool = True):
     self._line_count: int = 0
     self._error_count: int = 0
-    self._stream: io.TextIO = stream
+    self._stream: TextIO = stream
     if stream.isatty():
       self._sgr = MethodType(_sgr, self) # type: ignore
+    self._use_emoji: bool = use_emoji
 
-  def _print(self, text: str = '') -> None:
+  def print(self, text: str = '') -> None:
+    """Log the given text followed by a newline."""
     self._line_count += text.count('\n') + 1
     self._stream.write(text + '\n')
+
+  def print_json(self, value: Any, **kwargs: Any) -> None:
+    """Log a nicely indented JSON representation of the given value"""
+    self.print(jsonio.dumps(value, indent=2, **kwargs))
 
   def _sgr(self, _: str) -> str:
     return ''
 
-  def _print_bold(self, text: str) -> None:
-    self._print(self._sgr('1') + text + self._sgr('22'))
+  def print_bold(self, text: str) -> None:
+    """Log the text in bold followed by a newline."""
+    self.print(self._sgr('1') + text + self._sgr('22'))
 
-  def _print_in_green(self, text: str) -> None:
-    self._print(self._sgr('32;4;1') + text + self._sgr('39;22'))
-    self._print(self._sgr('42') + (' ' * len(text)) + self._sgr('49'))
+  def print_in_green(self, text: str) -> None:
+    """Log the text in green followed by a newline."""
+    self.print(self._sgr('32;4;1') + text + self._sgr('39;22'))
 
-  def _print_in_red(self, text: str) -> None:
-    self._print(self._sgr('31;1') + text + self._sgr('39;22'))
-    self._print(self._sgr('41') + (' ' * len(text)) + self._sgr('49'))
+  def print_in_red(self, text: str) -> None:
+    """Log the text in red followed by a newline."""
+    self.print(self._sgr('31;1') + text + self._sgr('39;22'))
 
-  def _print_object(self, value) -> None:
-    self._print(json.dumps(value, default=_default, indent=2))
-
-  @property
-  def error_count(self) -> int:
-    return self._error_count
-
-  def error(self, err: Union[str, Exception]) -> None:
-    self._error_count += 1
+  def _print_entry(
+    self, level: Level, err: Union[str, Exception], *extras: Any
+  ) -> None:
     starting_line = self._line_count
 
-    args = err.args if isinstance(err, Exception) else [err]
+    args = (err.args if isinstance(err, Exception) else (err,)) + extras
     for index, arg in enumerate(args):
       if isinstance(arg, str):
         if index == 0:
-          self._print_bold(arg)
+          if self._use_emoji:
+            arg = level.value + arg
+          self.print_bold(arg)
         else:
-          self._print(arg)
+          self.print(arg)
       else:
-        self._print_object(arg)
+        self.print_json(arg)
 
     if self._line_count - starting_line > 5:
-      self._print()
+      self.print()
+
+  @property
+  def error_count(self) -> int:
+    """The number of errors reported with :py:meth:`error` so far."""
+    return self._error_count
+
+  def error(self, err: Union[str, Exception], *extras: Any) -> None:
+    """
+    Log the given error message followed by the JSON representation of any
+    additional exception arguments as well as additional method arguments.
+    """
+    self._error_count += 1
+    self._print_entry(Level.ERROR, err, *extras)
+
+  def warn(self, warning: Union[str, Warning], *extras: Any) -> None:
+    """
+    Print a warning message.
+    """
+    self._warn_count += 1
+    self._print_entry(Level.WARN, warning, *extras)
 
   def done(self, message: str) -> None:
+    """
+    Print a summarizing message at completion of a tool run. If the output
+    stream is a TTY, the message is highlighted in red or green, depending on
+    whether any errors have been reported.
+
+    :param message: The farewell message.
+    """
     if self.error_count > 0:
-      self._print_in_red(message)
+      self.print_in_red(message)
     else:
-      self._print_in_green(message)
+      self.print_in_green(message)
