@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 
-from collections.abc import Iterator
+from collections.abc import Iterator, KeysView
 from typing import Any, cast, Generic, NoReturn, Optional, TypeVar, Union
 from deface.error import ValidationError
 
@@ -61,7 +61,7 @@ class Validator(Generic[T]):
     """
     value = self._value
     assert isinstance(value, dict)
-    keys = value.keys()
+    keys: KeysView[str] = value.keys()
     assert len(keys) == 1
     return next(iter(keys))
 
@@ -78,7 +78,7 @@ class Validator(Generic[T]):
         return f'.{key}'
       return f'[{json.dumps(key)}]'
 
-    path = []
+    path: list[str] = []
     current = self
     while current != current._parent:
       path.append(format(current._key))
@@ -130,14 +130,14 @@ class Validator(Generic[T]):
     the appropriate validator to continue validating the JSON data. If the
     current value is not a list, this method raises an assertion error.
     """
-    value = self._value
+    value: Any = self._value
     assert isinstance(value, list)
-    for index, item in enumerate(value):
+    for index, item in enumerate(cast(list[Any], value)):
       yield Validator(item, key=index, parent=self)
 
   def to_object(
     self,
-    valid_keys: set[str] = None,
+    valid_keys: Optional[set[str]] = None,
     singleton: bool = False
   ) -> Validator[dict[str,Any]]:
     """
@@ -156,7 +156,7 @@ class Validator(Generic[T]):
           self.raise_invalid(f'contains unexpected field {key}')
     return cast(Validator[dict[str,Any]], self)
 
-  def __getitem__(self, key: KeyT) -> Validator[T]:
+  def __getitem__(self, key: KeyT) -> Validator[Any]:
     """
     Index the current value with the given key to create a new child validator.
     The given key becomes the new validator's key and the result of the indexing
@@ -173,20 +173,21 @@ class Validator(Generic[T]):
     """
     value = self._value
     if isinstance(value, list):
+      list_value = cast(list[Any], value)
       if not isinstance(key, int):
         raise TypeError(f'Non-integer key "{key}" cannot index list')
       elif key < 0:
         raise IndexError(f'List index {key} is negative')
-      elif key >= len(value):
-        raise IndexError(f'List index {key} >= length {len(value)}')
+      elif key >= len(list_value):
+        raise IndexError(f'List index {key} >= length {len(list_value)}')
       else:
-        return Validator(value[key], key=key, parent=self)
+        return Validator[Any](list_value[key], key=key, parent=self)
     elif isinstance(value, dict):
       if not isinstance(key, str):
         raise TypeError(f'Non-string key "{key}" cannot index dict')
       elif key not in value:
         raise KeyError(f'Value "{value}" does not have field "{key}"')
       else:
-        return Validator(value[key], key=key, parent=self)
+        return Validator[Any](value[key], key=key, parent=self)
     else:
       raise TypeError(f'Scalar value "{value}" cannot be indexed')
