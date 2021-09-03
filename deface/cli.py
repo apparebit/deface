@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
+from argparse import ArgumentParser
 
 from deface import __version__
 from deface.jsonio import read_json
@@ -20,6 +20,18 @@ from deface.ingest import ingest_into_history
 from deface.logger import Logger
 from deface.model import PostHistory
 from deface.validator import Validator
+
+def create_parser() -> ArgumentParser:
+  """Create the argument parser for the deface command line tool."""
+  prog = 'deface'
+  version = f'{prog} {__version__}'
+  description = 'Clean and consolidate posts exported from Facebook.'
+
+  parser = ArgumentParser(prog=prog, description=description)
+  parser.add_argument('filenames', metavar='FILE', nargs='+')
+  parser.add_argument('-V', '--version', action='version', version=version)
+
+  return parser
 
 def main():
   """
@@ -29,14 +41,7 @@ def main():
   eliminates redundant information, reconciles the records into a single
   timeline, and then exports that timeline of posts as JSON.
   """
-  prog = 'deface'
-  version = f'{prog} {__version__}'
-  description = 'Clean and consolidate posts exported from Facebook.'
-
-  parser = argparse.ArgumentParser(prog=prog, description=description)
-  parser.add_argument('filenames', metavar='FILE', nargs='+')
-  parser.add_argument('-V', '--version', action='version', version=version)
-  args = parser.parse_args()
+  args = create_parser().parse_args()
 
   logger = Logger()
   history = PostHistory()
