@@ -7,7 +7,6 @@
 import os
 import sys
 
-from typing import Any, Optional
 
 # -- Path setup --------------------------------------------------------------
 
@@ -16,6 +15,12 @@ from typing import Any, Optional
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(1, os.path.abspath('sphinx_extensions'))
+
+import deface
+
+from github_link import make_linkcode_resolve  # type: ignore
+linkcode_resolve = make_linkcode_resolve('apparebit', 'deface')  # type: ignore
 
 
 # -- Project information -----------------------------------------------------
@@ -24,8 +29,11 @@ project = 'deface'
 copyright = '2021, Robert Grimm'
 author = 'Robert Grimm'
 
+# The major and minor version only.
+version = '.'.join(deface.__version__.split('.')[:2])
+
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = deface.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,11 +42,15 @@ release = '1.0.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+  # Builtin
   'sphinx.ext.autodoc',
   'sphinx.ext.coverage',
   'sphinx.ext.duration',
   'sphinx.ext.githubpages',
-  'sphinx.ext.linkcode'
+  'sphinx.ext.linkcode',
+  # External
+  'sphinx_argparse_cli',
+  'sphinxext.opengraph'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -48,16 +60,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
-
-# Resolve to GitHub URLs.
-def linkcode_resolve(domain: str, info: dict[str, Any]) -> Optional[str]:
-  if domain != 'py':
-    return None
-  elif 'module' not in info:
-    return None
-  filename = info['module'].replace('.', '/')
-  return f'https://github.com/apparebit/deface/{filename}.py'
 
 
 # -- Options for HTML output -------------------------------------------------
