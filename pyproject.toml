@@ -22,11 +22,9 @@ dependencies = []
 test = ["pytest"]
 doc = [
   "furo",
-  # https://myst-parser.readthedocs.io/en/latest/ ???
-  "sphinx"
-  #"sphinx-autobuild",
-  #"sphinx-copybutton",
-  #"sphinxext-opengraph"
+  "sphinx",
+  "sphinx-argparse-cli",
+  "sphinxext-opengraph"
 ]
 
 [project.scripts]
@@ -35,3 +33,6 @@ deface = "deface.cli:main"
 [tool.pyright]
 include = ["deface", "tests"]
 typeCheckingMode = 'strict'
+
+[tool.mypy]
+files = ["deface/**/*.py"]
