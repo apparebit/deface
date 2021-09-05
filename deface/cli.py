@@ -15,7 +15,7 @@
 from argparse import ArgumentParser
 
 from deface import __version__
-from deface.jsonio import read_json
+from deface.json_io import read_json
 from deface.ingest import ingest_into_history
 from deface.logger import Logger
 from deface.model import PostHistory
@@ -26,10 +26,25 @@ def create_parser() -> ArgumentParser:
   prog = 'deface'
   version = f'{prog} {__version__}'
   description = 'Clean and consolidate posts exported from Facebook.'
+  file_help = 'Path of ``your_posts_n.json`` file extracted from data archive'
 
-  parser = ArgumentParser(prog=prog, description=description)
-  parser.add_argument('filenames', metavar='FILE', nargs='+')
-  parser.add_argument('-V', '--version', action='version', version=version)
+  parser = ArgumentParser(prog=prog, description=description, add_help=False)
+  about = parser.add_argument_group('tool options')
+  about.add_argument(
+    '-h', '--help', action='help',
+    help='show detailed help message and exit'
+  )
+  about.add_argument('-V', '--version', action='version', version=version)
+
+  this_run = parser.add_argument_group('output options')
+  this_run.add_argument(
+    '-f', '--format',
+    nargs=1, default='ndjson', choices=['ndjson', 'json', 'pretty'],
+    help='Set output format to ``ndjson`` for newline-delimited JSON, '
+    '``json`` for regular JSON, or ``pretty`` for nicely indented JSON.'
+  )
+
+  parser.add_argument('filenames', metavar='FILE', nargs='+', help=file_help)
 
   return parser
 
