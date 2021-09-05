@@ -12,7 +12,10 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: gh-pages help Makefile
+.PHONY: clean gh-pages help Makefile
+
+clean:
+	rm -rf _build && mkdir _build
 
 .ONESHELL:
 gh-pages:
