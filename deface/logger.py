@@ -15,7 +15,7 @@
 import enum
 import sys
 
-from deface import jsonio
+from deface import json_io
 from types import MethodType
 from typing import Any, TextIO, Union
 
@@ -54,7 +54,7 @@ class Logger:
 
   def print_json(self, value: Any, **kwargs: Any) -> None:
     """Log a nicely indented JSON representation of the given value"""
-    self.print(jsonio.dumps(value, indent=2, **kwargs))
+    self.print(json_io.dumps(value, indent=2, **kwargs))
 
   def _sgr(self, _: str) -> str:
     return ''
