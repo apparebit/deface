@@ -1,69 +1,58 @@
 deface package
 ==============
 
-Submodules
+deface.cli
 ----------
-
-deface.cli module
------------------
 
 .. automodule:: deface.cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-deface.error module
--------------------
+deface.error
+------------
 
 .. automodule:: deface.error
    :members:
    :undoc-members:
    :show-inheritance:
 
-deface.ingest module
---------------------
+deface.ingest
+-------------
 
 .. automodule:: deface.ingest
    :members:
    :undoc-members:
    :show-inheritance:
 
-deface.jsonio module
---------------------
+deface.json_io
+--------------
 
-.. automodule:: deface.jsonio
+.. automodule:: deface.json_io
    :members:
    :undoc-members:
    :show-inheritance:
 
-deface.logger module
---------------------
+deface.logger
+-------------
 
 .. automodule:: deface.logger
    :members:
    :undoc-members:
    :show-inheritance:
 
-deface.model module
--------------------
+deface.model
+------------
 
 .. automodule:: deface.model
    :members:
    :undoc-members:
    :show-inheritance:
 
-deface.validator module
------------------------
+deface.validator
+----------------
 
 .. automodule:: deface.validator
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: deface
    :members:
    :undoc-members:
    :show-inheritance:

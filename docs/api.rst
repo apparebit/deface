@@ -1,7 +1,6 @@
-The deface library API
-======================
+Python API
+==========
 
 .. toctree::
-   :maxdepth: 4
 
    deface
