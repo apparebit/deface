@@ -25,7 +25,7 @@ _COMMENT_KEYS: set[str] = { 'author', 'comment', 'timestamp' }
 
 def ingest_comment(data: Validator[Any]) -> Comment:
   """
-  Ingest the current JSON data value as a comment.
+  Ingest the JSON data value wrapped by the validator as a comment.
   """
   comment_data = data.to_object(valid_keys=_COMMENT_KEYS)
   fields = comment_data.value
@@ -40,7 +40,7 @@ _EVENT_KEYS = { 'name', 'start_timestamp', 'end_timestamp' }
 
 def ingest_event(data: Validator[Any]) -> Event:
   """
-  Ingest the current JSON data value as an event.
+  Ingest the JSON data value wrapped by the validator as an event.
   """
   event_data = data.to_object(valid_keys=_EVENT_KEYS)
   fields = event_data.value
@@ -55,7 +55,7 @@ _EXTERNAL_CONTEXT_KEYS = { 'name', 'source', 'url' }
 
 def ingest_external_context(data: Validator[Any]) -> ExternalContext:
   """
-  Ingest the current JSON data value as an external context.
+  Ingest the JSON data value wrapped by the validator as an external context.
   """
   context_data = data.to_object(valid_keys=_EXTERNAL_CONTEXT_KEYS)
   fields = context_data.value
@@ -73,7 +73,7 @@ _COORDINATE_KEYS: set[str] = { 'latitude', 'longitude' }
 
 def ingest_location(data: Validator[Any]) -> Location:
   """
-  Ingest the current JSON data value as a location.
+  Ingest the JSON data value wrapped by the validator as a location.
   """
   location_data = data.to_object(valid_keys=_LOCATION_KEYS)
   fields = {}
@@ -109,7 +109,7 @@ _METADATA_KEYS: set[str] = { 'photo_metadata', 'video_metadata' }
 
 def ingest_media(data: Validator[Any]) -> Media:
   """
-  Ingest the current JSON data value as media.
+  Ingest the JSON data value wrapped by the validator as a media descriptor.
   """
   media_data = data.to_object(valid_keys=_MEDIA_KEYS)
   fields = {}
@@ -160,6 +160,11 @@ _POST_KEYS: set[str] = { 'attachments', 'data', 'tags', 'timestamp', 'title' }
 def _handle_attachments(
   data: Validator[Any], fields: dict[str, Any]
 ) -> tuple[list[Media], list[Location], list[str]]:
+  """
+  Handle a post's attachments, collecting individual fields in the eponymous
+  dictionary and possibly repeated ``media``, ``place``, and ``tag`` values
+  in separate lists (to be returned in a tuple).
+  """
   all_media: list[Media] = []
   all_places: list[Location] = []
   all_text: list[str] = []
@@ -200,7 +205,7 @@ def _handle_attachments(
 
 def ingest_post(data: Validator[Any]) -> Post:
   """
-  Ingest the current JSON data value as a post.
+  Ingest the JSON data value wrapped by the validator as a post.
   """
   post_data = data.to_object(valid_keys=_POST_KEYS)
   fields: dict[str, Any] = {}
@@ -262,8 +267,8 @@ def ingest_into_history(
   data: Validator[Any], history: PostHistory
 ) -> list[DefaceError]:
   """
-  Ingest the current JSON data value as list of posts into the given history.
-  This function returns a list of ingestion errors.
+  Ingest the JSON data value wrapped by the validator as list of posts into the
+  given history. This function returns a list of ingestion errors.
   """
   errors: list[DefaceError] = []
   for item_data in data.to_list().items():

@@ -20,12 +20,14 @@ import enum
 from typing import Optional, Union
 from deface.error import MergeError
 
+
 class MediaType(enum.Enum):
   """
   An enumeration of media types.
   """
   PHOTO = 'PHOTO'
   VIDEO = 'VIDEO'
+
 
 @dataclasses.dataclass(frozen=True)
 class Comment:
@@ -36,6 +38,7 @@ class Comment:
   comment: str
   timestamp: int
 
+
 @dataclasses.dataclass(frozen=True)
 class Event:
   """
@@ -45,14 +48,26 @@ class Event:
   start_timestamp: int
   end_timestamp: int
 
+
 @dataclasses.dataclass(frozen=True)
 class ExternalContext:
   """
-  An external context for a post.
+  The external context for a post.
   """
   url: str
+  """A URL linking to external content."""
+
   name: Optional[str] = None
+  """
+  The name of the website or, if article, its title. Not a common attribute.
+  """
+
   source: Optional[str] = None
+  """
+  The name of the website or, if article, the publication's name. Not a common
+  attribute.
+  """
+
 
 @dataclasses.dataclass(frozen=True)
 class Location:
@@ -66,6 +81,17 @@ class Location:
   url: Optional[str] = None
 
   def merge(self, other: Location) -> Location:
+    """
+    Merge this location with the given location. For two locations to merge,
+    they must have identical ``name``, ``address``, ``latitude``, and
+    ``longitude`` fields. Furthermore, they must either have identical ``url``
+    fields as well or one location has a string value while the other location
+    has ``None``. In case of identical URLs, this method returns ``self``. In
+    case of divergent URLs, this method returns the instance with the URL value.
+
+    :raises MergeError: indicates that the locations are different and thus
+      cannot be merged.
+    """
     if (
       self.name == other.name
       or self.address == other.address
@@ -82,7 +108,14 @@ class Location:
 class Media:
   """A posted photo or video."""
   comments: tuple[Comment, ...]
+  """The comments on the photo or video."""
+
   media_type: MediaType
+  """
+  The media type, which is derived from the metadata key in the original
+  data.
+  """
+
   metadata: dict[str, Union[str, int]] = dataclasses.field(compare=False)
 
   uri: str
