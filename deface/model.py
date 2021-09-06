@@ -17,7 +17,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from typing import Optional, Union
+from typing import Optional
 from deface.error import MergeError
 
 
@@ -80,35 +80,62 @@ class Location:
   longitude: Optional[float] = None
   url: Optional[str] = None
 
+  def is_mergeable_with(self, other: Location) -> bool:
+    """
+    Determine whether this location can be merged with the other location. For
+    two locations to be mergeable, they must have identical ``name``,
+    ``address``, ``latitude``, and ``longitude`` fields. Furthermore, they must
+    either have identical ``url`` fields or one location has a string value
+    while the other location has ``None``.
+    """
+    return (
+      self.name == other.name
+      and self.address == other.address
+      and self.latitude == other.latitude
+      and self.longitude == other.longitude
+      and (
+        self.url == other.url
+        or self.url is None
+        or other.url is None
+      )
+    )
+
   def merge(self, other: Location) -> Location:
     """
-    Merge this location with the given location. For two locations to merge,
-    they must have identical ``name``, ``address``, ``latitude``, and
-    ``longitude`` fields. Furthermore, they must either have identical ``url``
-    fields as well or one location has a string value while the other location
-    has ``None``. In case of identical URLs, this method returns ``self``. In
-    case of divergent URLs, this method returns the instance with the URL value.
+    Merge this location with the given location. In case of identical URLs, this
+    method returns ``self``. In case of divergent URLs, this method returns the
+    instance with the URL value.
 
     :raises MergeError: indicates that the locations are different and thus
       cannot be merged.
     """
-    if (
-      self.name == other.name
-      or self.address == other.address
-      or self.latitude == other.latitude
-      or self.longitude == other.longitude
-    ):
-      if self.url == other.url or other.url is None:
-        return self
-      elif self.url is None:
-        return other
-    raise MergeError('Unable to merge unrelated locations', self, other)
+    if not self.is_mergeable_with(other):
+      raise MergeError('Unable to merge unrelated locations', self, other)
+    elif self.url == other.url or other.url is None:
+      return self
+    else:
+      return other
+
+@dataclasses.dataclass(frozen=True)
+class MediaMetaData:
+  upload_ip: str
+  camera_make: Optional[str] = None
+  camera_model: Optional[str] = None
+  exposure: Optional[str] = None
+  focal_length: Optional[str] = None
+  f_stop: Optional[str] = None
+  iso_speed: Optional[int] = None
+  orientation: Optional[int] = None
+  original_height: Optional[int] = None
+  original_width: Optional[int] = None
+  upload_timestamp: Optional[int] = None
+
 
 @dataclasses.dataclass(frozen=True)
 class Media:
   """A posted photo or video."""
   comments: tuple[Comment, ...]
-  """The comments on the photo or video."""
+  """Comments specifically on the photo or video."""
 
   media_type: MediaType
   """
@@ -116,7 +143,7 @@ class Media:
   data.
   """
 
-  metadata: dict[str, Union[str, int]] = dataclasses.field(compare=False)
+  metadata: MediaMetaData
 
   uri: str
   """
@@ -138,6 +165,7 @@ class Media:
   thumbnail: Optional[str] = None
   title: Optional[str] = None
 
+
 @dataclasses.dataclass(frozen=True)
 class Post:
   """A post on Facebook."""
@@ -147,9 +175,9 @@ class Post:
   The photos and videos attached to a post.
   """
 
-  place: tuple[Location, ...]
+  places: tuple[Location, ...]
   """
-  A place. In the original Facebook data, almost all posts have at most one
+  The places for this post. Almost all posts have at most one
   :py:class:`deface.model.Location`. Occasionally, a post has two locations that
   share the same address, latitude, longitude, and name but differ on
   :py:attr:`deface.model.Location.url`, with one location having ``None`` and
@@ -198,28 +226,36 @@ class Post:
   field has devolved to a flag indicating whether a post was updated.
   """
 
+  def is_mergeable_with(self, other: Post) -> bool:
+    """
+    Determine whether this post can be merged with the given post. The two posts
+    are mergeable if they differ in their media at most.
+    """
+    return (
+      self.tags == other.tags
+      and self.timestamp == other.timestamp
+      and self.backdated_timestamp == other.backdated_timestamp
+      and self.event == other.event
+      and self.external_context == other.external_context
+      and self.name == other.name
+      and self.places == other.places
+      and self.post == other.post
+      and self.title == other.title
+      and self.update_timestamp == other.update_timestamp
+    )
+
   def merge(self, other: Post) -> Post:
     """
-    Merge this post with the other post. If the two posts differ only in media
-    objects, this method returns a new post that combines the media objects from
-    both posts. This does remove redundant post data in practice. If the two
-    posts cannot be merge, this method raises a
-    :py:exc:`deface.error.MergeError`.
+    Merge this post with the other post. If the two posts differ only in media,
+    this method returns a new post that combines the media from both posts.
+
+    :param other: The post to merge with.
+    :raises MergeError: indicates that the two posts differ in more than their
+      media
     """
     if self == other:
       return self
-    elif (
-      self.tags != other.tags
-      or self.timestamp != other.timestamp
-      or self.backdated_timestamp != other.backdated_timestamp
-      or self.event != other.event
-      or self.external_context != other.external_context
-      or self.name != other.name
-      or self.place != other.place
-      or self.post != other.post
-      or self.title != other.title
-      or self.update_timestamp != other.update_timestamp
-    ):
+    elif not self.is_mergeable_with(other):
       raise MergeError('Unable to merge unrelated posts', self, other)
 
     media1 = set(self.media)
@@ -232,7 +268,7 @@ class Post:
       return dataclasses.replace(self, media=tuple(media1 | media2))
 
 class PostHistory:
-  def __init__(self):
+  def __init__(self) -> None:
     self._posts: dict[int, Post] = dict()
 
   def add(self, post: Post) -> None:
