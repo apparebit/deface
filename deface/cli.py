@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from argparse import ArgumentParser
+from typing import Any
 
 from deface import __version__
 from deface.json_io import read_json
@@ -48,7 +49,7 @@ def create_parser() -> ArgumentParser:
 
   return parser
 
-def main():
+def main() -> None:
   """
   A command line tool to convert Facebook posts from their personal archive
   format to a simpler, cleaner version. The tool reads in one or more files with
@@ -63,11 +64,11 @@ def main():
   for filename in args.filenames:
     try:
       json_data = read_json(filename)
-    except Exception as err:
-      logger.error(err)
+    except Exception as read_err:
+      logger.error(read_err)
       continue
 
-    wrapped_data = Validator(json_data, filename=filename)
+    wrapped_data = Validator[Any](json_data, filename=filename)
     errors = ingest_into_history(wrapped_data, history)
     for err in errors:
       logger.error(err)

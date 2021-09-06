@@ -22,7 +22,7 @@ from typing import Any, TextIO, Union
 def pluralize(count: int, noun: str, suffix: str = 's') -> str:
   return noun + suffix if count != 1 else noun
 
-def _sgr(_, code: str) -> str:
+def _sgr(_: str, code: str) -> str:
   return f'\x1b[{code}m'
 
 class Level(enum.Enum):
@@ -42,6 +42,7 @@ class Logger:
   def __init__(self, stream: TextIO = sys.stderr, use_emoji: bool = True):
     self._line_count: int = 0
     self._error_count: int = 0
+    self._warn_count: int = 0
     self._stream: TextIO = stream
     if stream.isatty():
       self._sgr = MethodType(_sgr, self) # type: ignore
