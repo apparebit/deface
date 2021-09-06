@@ -17,7 +17,15 @@ from typing import Any
 
 from deface.error import DefaceError, MergeError, ValidationError
 from deface.model import (
-  Comment, Event, ExternalContext, Location, Media, MediaType, Post, PostHistory
+  Comment,
+  Event,
+  ExternalContext,
+  Location,
+  Media,
+  MediaType,
+  MediaMetaData,
+  Post,
+  PostHistory
 )
 from deface.validator import Validator
 
@@ -28,11 +36,10 @@ def ingest_comment(data: Validator[Any]) -> Comment:
   Ingest the JSON data value wrapped by the validator as a comment.
   """
   comment_data = data.to_object(valid_keys=_COMMENT_KEYS)
-  fields = comment_data.value
   comment_data['author'].to_string()
   comment_data['comment'].to_string()
   comment_data['timestamp'].to_integer()
-  return Comment(**fields) # type: ignore
+  return Comment(**comment_data.value)
 
 # ------------------------------------------------------------------------------
 
@@ -43,11 +50,10 @@ def ingest_event(data: Validator[Any]) -> Event:
   Ingest the JSON data value wrapped by the validator as an event.
   """
   event_data = data.to_object(valid_keys=_EVENT_KEYS)
-  fields = event_data.value
   event_data['name'].to_string()
   event_data['start_timestamp'].to_integer()
   event_data['end_timestamp'].to_integer()
-  return Event(**fields) # type: ignore
+  return Event(**event_data.value)
 
 # ------------------------------------------------------------------------------
 
@@ -58,13 +64,12 @@ def ingest_external_context(data: Validator[Any]) -> ExternalContext:
   Ingest the JSON data value wrapped by the validator as an external context.
   """
   context_data = data.to_object(valid_keys=_EXTERNAL_CONTEXT_KEYS)
-  fields = context_data.value
   if 'name' in context_data.value:
     context_data['name'].to_string()
   if 'source' in context_data.value:
     context_data['source'].to_string()
   context_data['url'].to_string()
-  return ExternalContext(**fields) # type: ignore
+  return ExternalContext(**context_data.value)
 
 # ------------------------------------------------------------------------------
 
@@ -76,7 +81,7 @@ def ingest_location(data: Validator[Any]) -> Location:
   Ingest the JSON data value wrapped by the validator as a location.
   """
   location_data = data.to_object(valid_keys=_LOCATION_KEYS)
-  fields = {}
+  fields: dict[str, Any] = {}
   if 'address' in location_data.value:
     fields['address'] = location_data['address'].to_string().value
 
@@ -91,7 +96,52 @@ def ingest_location(data: Validator[Any]) -> Location:
   if 'url' in location_data.value:
     fields['url'] = location_data['url'].to_string().value
 
-  return Location(**fields) # type: ignore
+  return Location(**fields)
+
+# ------------------------------------------------------------------------------
+
+_METADATA_KEYS: set[str] = {
+  'camera_make',
+  'camera_model',
+  'exposure',
+  'focal_length',
+  'f_stop',
+  'iso_speed',
+  'orientation',
+  'original_width',
+  'original_height',
+  'upload_ip',
+  'upload_timestamp',
+}
+
+def ingest_metadata(data: Validator[Any]) -> MediaMetaData:
+  """
+  Ingest the JSON data value wrapped by the validator as media metadata.
+  """
+  metadata = data.to_object(valid_keys=_METADATA_KEYS)
+  metadata['upload_ip'].to_string()
+  if 'camera_make' in metadata.value:
+    metadata['camera_make'].to_string()
+  if 'camera_model' in metadata.value:
+    metadata['camera_model'].to_string()
+  if 'exposure' in metadata.value:
+    metadata['exposure'].to_string()
+  if 'focal_length' in metadata.value:
+    metadata['focal_length'].to_string()
+  if 'f_stop' in metadata.value:
+    metadata['f_stop'].to_string()
+  if 'iso_speed' in metadata.value:
+    metadata['iso_speed'].to_integer()
+  if 'orientation' in metadata.value:
+    metadata['orientation'].to_integer()
+  if 'original_height' in metadata.value:
+    metadata['original_height'].to_integer()
+  if 'original_width' in metadata.value:
+    metadata['original_width'].to_integer()
+  if 'upload_timestamp' in metadata.value:
+    metadata['upload_timestamp'].to_integer()
+
+  return MediaMetaData(**metadata.value)
 
 # ------------------------------------------------------------------------------
 
@@ -105,14 +155,14 @@ _MEDIA_KEYS: set[str] = {
   'uri',
 }
 
-_METADATA_KEYS: set[str] = { 'photo_metadata', 'video_metadata' }
+_MEDIA_METADATA_KEYS: set[str] = { 'photo_metadata', 'video_metadata' }
 
 def ingest_media(data: Validator[Any]) -> Media:
   """
   Ingest the JSON data value wrapped by the validator as a media descriptor.
   """
   media_data = data.to_object(valid_keys=_MEDIA_KEYS)
-  fields = {}
+  fields: dict[str, Any] = {}
 
   comments: list[Comment] = []
   if 'comments' in media_data.value:
@@ -128,7 +178,7 @@ def ingest_media(data: Validator[Any]) -> Media:
     fields['description'] = media_data['description'].to_string().value
 
   media_metadata = media_data['media_metadata'].to_object(
-    valid_keys=_METADATA_KEYS, singleton=True
+    valid_keys=_MEDIA_METADATA_KEYS, singleton=True
   )
   metadata_key = media_metadata.only_key
   fields['media_type'] = (
@@ -136,7 +186,7 @@ def ingest_media(data: Validator[Any]) -> Media:
     if metadata_key == 'photo_metadata'
     else MediaType.VIDEO
   )
-  fields['metadata'] = media_metadata[metadata_key].to_object().value
+  fields['metadata'] = ingest_metadata(media_metadata[metadata_key])
 
   if 'thumbnail' in media_data.value:
     thumbnail_data = media_data['thumbnail'].to_object(
@@ -147,7 +197,7 @@ def ingest_media(data: Validator[Any]) -> Media:
   fields['title'] = media_data['title'].to_string().value
   fields['uri'] = media_data['uri'].to_string().value
 
-  return Media(**fields) # type: ignore
+  return Media(**fields)
 
 # ------------------------------------------------------------------------------
 
@@ -210,14 +260,17 @@ def ingest_post(data: Validator[Any]) -> Post:
   post_data = data.to_object(valid_keys=_POST_KEYS)
   fields: dict[str, Any] = {}
 
+  all_media: list[Media]
+  all_places: list[Location]
+  all_text: list[str]
   if 'attachments' in post_data.value:
     all_media, all_places, all_text = _handle_attachments(
       post_data['attachments'], fields
     )
   else:
-    all_media: list[Media] = list()
-    all_places: list[Location] = list()
-    all_text: list[str] = list()
+    all_media = list()
+    all_places = list()
+    all_text = list()
 
   if 'data' in post_data.value:
     for item in post_data['data'].to_list().items():
@@ -258,10 +311,10 @@ def ingest_post(data: Validator[Any]) -> Post:
       for index, media in enumerate(all_media):
         all_media[index] = dataclasses.replace(media, description=None)
   fields['media'] = tuple(all_media)
-  fields['place'] = tuple(all_places)
+  fields['places'] = tuple(all_places)
   fields['text'] = tuple(all_text)
 
-  return Post(**fields) # type: ignore
+  return Post(**fields)
 
 def ingest_into_history(
   data: Validator[Any], history: PostHistory
