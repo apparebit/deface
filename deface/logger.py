@@ -39,19 +39,26 @@ class Logger:
   :param stream: The stream to write to, which defaults to standard error.
   :param use_emoji: The flag for using emoji, which defaults to ``True``.
   """
-  def __init__(self, stream: TextIO = sys.stderr, use_emoji: bool = True):
+  def __init__(
+    self,
+    stream: TextIO = sys.stderr,
+    prefix: str = '',
+    use_emoji: bool = True
+  ):
     self._line_count: int = 0
     self._error_count: int = 0
     self._warn_count: int = 0
     self._stream: TextIO = stream
     if stream.isatty():
       self._sgr = MethodType(_sgr, self) # type: ignore
+    self._prefix: str = prefix
     self._use_emoji: bool = use_emoji
 
   def print(self, text: str = '') -> None:
     """Log the given text followed by a newline."""
     self._line_count += text.count('\n') + 1
-    self._stream.write(text + '\n')
+    text = self._prefix + text.replace('\n', '\n' + self._prefix) + '\n'
+    self._stream.write(text)
 
   def print_json(self, value: Any, **kwargs: Any) -> None:
     """Log a nicely indented JSON representation of the given value"""
