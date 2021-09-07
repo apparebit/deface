@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import dataclasses
-from typing import Any
+from typing import Any, Optional
 
 from deface.error import DefaceError, MergeError, ValidationError
 from deface.model import (
@@ -114,34 +114,44 @@ _METADATA_KEYS: set[str] = {
   'upload_timestamp',
 }
 
-def ingest_metadata(data: Validator[Any]) -> MediaMetaData:
+def ingest_metadata(
+  data: Validator[Any], media_fields: dict[str, Any]
+) -> Optional[MediaMetaData]:
   """
-  Ingest the JSON data value wrapped by the validator as media metadata.
+  Ingest the JSON data value wrapped by the validator as media metadata. Since
+  the ``upload_ip`` and ``upload_timestamp`` attributes really belong to the
+  media descriptor itself, this function adds them to the given
+  ``media_fields``.
   """
   metadata = data.to_object(valid_keys=_METADATA_KEYS)
-  metadata['upload_ip'].to_string()
-  if 'camera_make' in metadata.value:
-    metadata['camera_make'].to_string()
-  if 'camera_model' in metadata.value:
-    metadata['camera_model'].to_string()
-  if 'exposure' in metadata.value:
-    metadata['exposure'].to_string()
-  if 'focal_length' in metadata.value:
-    metadata['focal_length'].to_string()
-  if 'f_stop' in metadata.value:
-    metadata['f_stop'].to_string()
-  if 'iso_speed' in metadata.value:
-    metadata['iso_speed'].to_integer()
-  if 'orientation' in metadata.value:
-    metadata['orientation'].to_integer()
-  if 'original_height' in metadata.value:
-    metadata['original_height'].to_integer()
-  if 'original_width' in metadata.value:
-    metadata['original_width'].to_integer()
-  if 'upload_timestamp' in metadata.value:
-    metadata['upload_timestamp'].to_integer()
 
-  return MediaMetaData(**metadata.value)
+  media_fields['upload_ip'] = metadata['upload_ip'].to_string().value
+  if 'upload_timestamp' in metadata.value:
+    media_fields['upload_timestamp'] = (
+      metadata['upload_timestamp'].to_integer().value
+    )
+
+  fields: dict[str, Any] = {}
+  if 'camera_make' in metadata.value:
+    fields['camera_make'] = metadata['camera_make'].to_string().value
+  if 'camera_model' in metadata.value:
+    fields['camera_model'] = metadata['camera_model'].to_string().value
+  if 'exposure' in metadata.value:
+    fields['exposure'] = metadata['exposure'].to_string().value
+  if 'focal_length' in metadata.value:
+    fields['focal_length'] = metadata['focal_length'].to_string().value
+  if 'f_stop' in metadata.value:
+    fields['f_stop'] = metadata['f_stop'].to_string().value
+  if 'iso_speed' in metadata.value:
+    fields['iso_speed'] = metadata['iso_speed'].to_integer().value
+  if 'orientation' in metadata.value:
+    fields['orientation'] = metadata['orientation'].to_integer().value
+  if 'original_height' in metadata.value:
+    fields['original_height'] = metadata['original_height'].to_integer().value
+  if 'original_width' in metadata.value:
+    fields['original_width'] = metadata['original_width'].to_integer().value
+
+  return MediaMetaData(**fields) if len(fields) > 0 else None
 
 # ------------------------------------------------------------------------------
 
@@ -177,16 +187,18 @@ def ingest_media(data: Validator[Any]) -> Media:
   if 'description' in media_data.value:
     fields['description'] = media_data['description'].to_string().value
 
-  media_metadata = media_data['media_metadata'].to_object(
+  metadata = media_data['media_metadata'].to_object(
     valid_keys=_MEDIA_METADATA_KEYS, singleton=True
   )
-  metadata_key = media_metadata.only_key
+  metadata_key = metadata.only_key
   fields['media_type'] = (
     MediaType.PHOTO
     if metadata_key == 'photo_metadata'
     else MediaType.VIDEO
   )
-  fields['metadata'] = ingest_metadata(media_metadata[metadata_key])
+  media_metadata = ingest_metadata(metadata[metadata_key], fields)
+  if media_metadata is not None:
+    fields['metadata'] = media_metadata
 
   if 'thumbnail' in media_data.value:
     thumbnail_data = media_data['thumbnail'].to_object(
@@ -331,6 +343,6 @@ def ingest_into_history(
     except MergeError as err:
       errors.append(err)
     except ValidationError as err:
-      err.args = err.args + (data.value,)
+      err.args = err.args + (item_data.value,)
       errors.append(err)
   return errors
