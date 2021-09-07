@@ -17,7 +17,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from typing import Optional
+from typing import Optional, Union
 from deface.error import MergeError
 
 
@@ -45,15 +45,45 @@ class Event:
   An event
   """
   name: str
+  """The event's name."""
+
   start_timestamp: int
+  """The beginning of the event."""
+
   end_timestamp: int
+  """The end of the event or zero for events without a defined duration."""
 
 
 @dataclasses.dataclass(frozen=True)
 class ExternalContext:
   """
-  The external context for a post.
+  The external context for a post. In the original Facebook post data, a post's
+  external context is part of the attachments:
+
+  .. code-block:: json
+
+     {
+       "attachments": [
+         {
+           "data": [
+             {
+               "external_context": {
+                 "name": "Instagram Post by Ro\\u00cc\\u0081isi\\u00cc\\u0081n Murphy",
+                 "source": "instagram.com",
+                 "url": "https://www.instagram.com/p/B_13ojcD6Fh/"
+               }
+             }
+           ]
+         }
+       ]
+     }
+
+  Unusually, the example includes a ``name`` and ``source`` in addition to the
+  ``url``. It also illustrates the mojibake resulting from Facebook erroneously
+  double encoding all text. The ``name`` should read ``Instagram Post by
+  Róisín Murphy``.
   """
+
   url: str
   """A URL linking to external content."""
 
@@ -72,21 +102,58 @@ class ExternalContext:
 @dataclasses.dataclass(frozen=True)
 class Location:
   """
-  A location in the real world.
+  A location in the real world. In the original Facebook post data, a post's
+  place is part of the attachments:
+
+  .. code-block:: json
+
+     {
+       "attachments": [
+         {
+           "data": [
+             {
+               "place": {
+                 "name": "Whitney Museum of American Art",
+                 "coordinate": {
+                   "latitude": 40.739541735,
+                   "longitude": -74.009095020556
+                 },
+                 "address": "",
+                 "url": "https://www.facebook.com/whitneymuseum/"
+               }
+             }
+           ]
+         }
+       ]
+     }
+
+  The ``coordinates`` are stripped during ingestion to hoist ``latitude`` and
+  ``longitude`` into the location record.
   """
   name: str
   address: Optional[str] = None
+
   latitude: Optional[float] = None
+  """
+  The latitude. In the original Facebook post data, this attribute is nested
+  inside the ``coordinates`` attribute.
+  """
+
   longitude: Optional[float] = None
+  """
+  The longitude. In the original Facebook data, this attribute is nested inside
+  the ``coordinates`` attribute.
+  """
+
   url: Optional[str] = None
 
   def is_mergeable_with(self, other: Location) -> bool:
     """
     Determine whether this location can be merged with the other location. For
     two locations to be mergeable, they must have identical ``name``,
-    ``address``, ``latitude``, and ``longitude`` fields. Furthermore, they must
-    either have identical ``url`` fields or one location has a string value
-    while the other location has ``None``.
+    ``address``, ``latitude``, and ``longitude`` attributes. Furthermore, they
+    must either have identical ``url`` attributes or one location has a string
+    value while the other location has ``None``.
     """
     return (
       self.name == other.name
@@ -106,8 +173,8 @@ class Location:
     method returns ``self``. In case of divergent URLs, this method returns the
     instance with the URL value.
 
-    :raises MergeError: indicates that the locations are different and thus
-      cannot be merged.
+    :raises MergeError: indicates that the locations differ in more than their
+      URLs and thus cannot be merged.
     """
     if not self.is_mergeable_with(other):
       raise MergeError('Unable to merge unrelated locations', self, other)
@@ -118,7 +185,16 @@ class Location:
 
 @dataclasses.dataclass(frozen=True)
 class MediaMetaData:
-  upload_ip: str
+  """
+  The metadata for a photo or video. In the original Facebook post data, this
+  object also includes the ``upload_ip`` and ``upload_timestamp``, but since
+  both attributes describe the use of the photo or video on Facebook and not the
+  photo or video itself, they are hoisted into the :py:class:`Media` record. The
+  remaining attributes, even if present in the original Facebook post data, tend
+  to be meaningless, i.e., are either the empty string or zero. Also, while the
+  remaining attributes would be meaningful for both photos and videos, the are
+  found only on photos.
+  """
   camera_make: Optional[str] = None
   camera_model: Optional[str] = None
   exposure: Optional[str] = None
@@ -128,12 +204,12 @@ class MediaMetaData:
   orientation: Optional[int] = None
   original_height: Optional[int] = None
   original_width: Optional[int] = None
-  upload_timestamp: Optional[int] = None
 
 
 @dataclasses.dataclass(frozen=True)
 class Media:
   """A posted photo or video."""
+
   comments: tuple[Comment, ...]
   """Comments specifically on the photo or video."""
 
@@ -143,27 +219,50 @@ class Media:
   data.
   """
 
-  metadata: MediaMetaData
-
   uri: str
   """
   The absolute path to the photo or video within the personal data archive. In
-  terms of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`, the field
-  provides a *relative reference*, i.e., it lacks a scheme such as ``file:``.
+  terms of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`, the
+  attribute provides a *relative reference*, i.e., it lacks a scheme such as
+  ``file:``.
+  """
+
+  upload_ip: str
+  """
+  The IP address from which the photo or video was uploaded from. In the
+  original Facebook post data, this attribute is part of the  ``photo_metadata``
+  or ``video_metadata`` object nested inside the media object's
+  ``media_metadata``. It also is the only attribute reliably included with that
+  object. However, since ``upload_ip`` really is part of Facebook's data on the
+  use of the photo or video, it is hoisted into the media record during
+  ingestion.
   """
 
   creation_timestamp: Optional[int] = None
 
   description: Optional[str] = None
   """
-  deface prioritizes the :py:attr:`deface.model.Post.post` over its media
-  objects' :py:attr:`deface.model.Media.description`. When safe,
-  :py:func:`deface.ingest.ingest_post` hoists the media description into the
-  post body while also deleting redundant media descriptions.
+  A description of the photo or video. In the original Facebook post data, the
+  value for this attribute may be duplicated amongst all of a post's media
+  objects as well as the post's body. Whereever safe, such redundancy is
+  resolved in favor of the post's body. As a result, any remaining description
+  on a media record is unique to that photo or video.
   """
+
+  metadata: Optional[MediaMetaData] = None
+  """The metadata for the photo or video."""
 
   thumbnail: Optional[str] = None
   title: Optional[str] = None
+
+  upload_timestamp: Optional[int] = None
+  """
+  The timestamp at which the photo or video was uploaded. In the original
+  Facebook post data, this field is part of the  ``photo_metadata`` or
+  ``video_metadata`` object nested inside the media object's ``media_metadata``.
+  However, since it really is part of Facebook's data on the use of the photo or
+  video, it is hoisted into the media record during ingestion.
+  """
 
 
 @dataclasses.dataclass(frozen=True)
@@ -215,8 +314,15 @@ class Post:
 
   title: Optional[str] = None
   """
-  The title of a post, which seems to be filled in automatically and hence is of
-  limited use.
+  The title of a post. This field is filled in automatically and hence generic.
+  Starting with more common ones, variations include:
+
+  * ``Alice``
+  * ``Alice updated her status.``
+  * ``Alice shared a memory.``
+  * ``Alice wrote on Bob's timeline.``
+  * ``Alice is feeling blessed.``
+  * ``Alice was with Bob.``
   """
 
   update_timestamp: Optional[int] = None
@@ -225,6 +331,12 @@ class Post:
   its value appears to be the same as that of ``timestamp``. In other words, the
   field has devolved to a flag indicating whether a post was updated.
   """
+
+  def is_simultaneous(self, other: Post) -> bool:
+    """
+    Determine whether this post and the other post have the same timestamp.
+    """
+    return self.timestamp == other.timestamp
 
   def is_mergeable_with(self, other: Post) -> bool:
     """
@@ -246,40 +358,114 @@ class Post:
 
   def merge(self, other: Post) -> Post:
     """
-    Merge this post with the other post. If the two posts differ only in media,
-    this method returns a new post that combines the media from both posts.
+    Merge this post with the other post. If the two posts differ only in their
+    media, this method returns a new post that combines the media from both
+    posts.
 
-    :param other: The post to merge with.
+    :param other: the post to merge with.
+
     :raises MergeError: indicates that the two posts differ in more than their
-      media
+      media or have different media descriptors for the same photo or video.
     """
     if self == other:
       return self
     elif not self.is_mergeable_with(other):
       raise MergeError('Unable to merge unrelated posts', self, other)
 
-    media1 = set(self.media)
-    media2 = set(other.media)
-    if media2 <= media1:
-      return self
-    elif media1 <= media2:
-      return other
-    else:
-      return dataclasses.replace(self, media=tuple(media1 | media2))
+    by_uri: dict[str, Media] = {}
+    def collect(media: Media) -> None:
+      if media.uri not in by_uri:
+        by_uri[media.uri] = media
+        return
+
+      previous = by_uri[media.uri]
+      if previous != media:
+        raise MergeError(
+          'Unable to merge posts with different media descriptors'
+          ' for the same photo/video',
+          self,
+          other,
+        )
+
+    for media in self.media:
+      collect(media)
+    for media in other.media:
+      collect(media)
+    return dataclasses.replace(self, media=tuple(by_uri.values()))
+
 
 class PostHistory:
+  """
+  A history of posts. This class tracks added posts by timestamp so that it can
+  merge posts that only differ in media while also eliminating duplicate posts.
+  The latter is important when ingesting posts from more than one personal data
+  archive, since the archives may just overlap in time.
+  """
   def __init__(self) -> None:
-    self._posts: dict[int, Post] = dict()
+    self._posts: dict[int, Union[Post, list[Post]]] = dict()
 
   def add(self, post: Post) -> None:
-    timestamp = post.timestamp
-    if timestamp in self._posts:
-      other_post = self._posts[timestamp]
-      self._posts[timestamp] = post.merge(other_post)
-    else:
-      self._posts[post.timestamp] = post
+    """
+    Add the post to the history of posts.
 
-  def posts(self) -> list[Post]:
-    posts = list(self._posts.values())
+    :raises MergeError: indicates that at least one other post with the same
+      timestamp already exists in the history and that the two posts could not
+      be merged.
+    """
+    timestamp = post.timestamp
+    if timestamp not in self._posts:
+      # No prior post with same timestamp.
+      self._posts[timestamp] = post
+      return
+
+    already_recorded = self._posts[timestamp]
+    if isinstance(already_recorded, Post):
+      # One prior post with same timestamp.
+      if already_recorded.is_mergeable_with(post):
+        self._posts[timestamp] = already_recorded.merge(post)
+      else:
+        self._posts[timestamp] = [already_recorded, post]
+      return
+
+    # Several prior posts with same timestamp.
+    for index, other in enumerate(already_recorded):
+      if other.is_mergeable_with(post):
+        already_recorded[index] = other.merge(post)
+        return
+    already_recorded.append(post)
+
+  def timeline(self) -> list[Post]:
+    """
+    Get a timeline for the history of posts. The timeline includes all posts
+    from the history in chronological order.
+    """
+    posts: list[Post] = []
+    for value in self._posts.values():
+      if isinstance(value, Post):
+        posts.append(value)
+      else:
+        posts.extend(value)
     sorted(posts, key=lambda p: p.timestamp)
     return posts
+
+
+def find_simultaneous_posts(timeline: list[Post]) -> list[range]:
+  """
+  Find all simultaneous posts on the given timeline and return the ranges of
+  their indexes.
+  """
+  simultaneous_posts: list[range] = []
+
+  index = 0
+  length = len(timeline)
+  while index < length:
+    start = index
+    post = timeline[index]
+
+    while index + 1 < length and post.is_simultaneous(timeline[index + 1]):
+      index += 1
+
+    if start != index:
+      simultaneous_posts.append(range(start, index + 1))
+
+  return simultaneous_posts
