@@ -13,13 +13,14 @@
 # limitations under the License.
 
 from argparse import ArgumentParser
+import sys
 from typing import Any
 
 from deface import __version__
-from deface.json_io import read_json
+from deface.json_io import dumps, loads
 from deface.ingest import ingest_into_history
 from deface.logger import Logger
-from deface.model import PostHistory
+from deface.model import PostHistory, find_simultaneous_posts
 from deface.validator import Validator
 
 def create_parser() -> ArgumentParser:
@@ -59,11 +60,18 @@ def main() -> None:
   """
   args = create_parser().parse_args()
 
-  logger = Logger()
+  # Make errors and warnings appear in line-terminated comments. While they are
+  # printed to standard error instead of standard out, that nonetheless helps to
+  # visually offset them from the JSON output and smart users may just want to
+  # pipe them into the output as well.
+  logger = Logger(prefix = '// ')
+
+  # Collect posts.
   history = PostHistory()
   for filename in args.filenames:
     try:
-      json_data = read_json(filename)
+      with open(filename, 'rb') as file:
+        json_data = loads(file.read())
     except Exception as read_err:
       logger.error(read_err)
       continue
@@ -73,9 +81,39 @@ def main() -> None:
     for err in errors:
       logger.error(err)
 
-  posts = history.posts()
-  sign_off = f'Ingested {len(posts)} posts'
+  # Extract timeline.
+  timeline = history.timeline()
+  timeline_length = len(timeline)
+
+  # Warn about multiple posts with the same timestamp. They do happen. But they
+  # do happen so rarely that they deserve manual validation.
+  simultaneous_posts = find_simultaneous_posts(timeline)
+  for index_range in simultaneous_posts:
+    post = timeline[index_range.start]
+    count = index_range.stop - index_range.start
+    logger.warn(f'There are {count} posts with timestamp {post.timestamp}')
+
+  # Emit the timeline of posts.
+  if args.format != 'ndjson':
+    sys.stdout.write('[\n')
+
+  for index, post in enumerate(timeline):
+    if args.format != 'pretty':
+      sys.stdout.write(dumps(post))
+    else:
+      sys.stdout.write(dumps(post, indent=2))
+    if args.format != 'ndjson' and index < timeline_length - 1:
+      sys.stdout.write(',\n')
+    else:
+      sys.stdout.write('\n')
+
+  if args.format != 'ndjson':
+    sys.stdout.write(']\n')
+  sys.stdout.flush()
+
+  # Sign off.
+  sign_off = f'Ingested {timeline_length} posts'
   if logger.error_count > 0:
-    sign_off += f', encountered {logger.error_count} errors'
+    sign_off += f' while also encountering {logger.error_count} errors'
   sign_off += '.'
   logger.done(sign_off)
