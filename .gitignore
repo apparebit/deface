@@ -1,4 +1,5 @@
 .DS_Store
+.mypy_cache
 .pytest_cache
 .python-version
 node_modules
