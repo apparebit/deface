@@ -43,7 +43,3 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-
-[tool.pyright]
-include = ["deface", "tests"]
-typeCheckingMode = 'strict'
