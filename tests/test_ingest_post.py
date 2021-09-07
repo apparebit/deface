@@ -17,12 +17,12 @@ import pytest
 from typing import Any
 
 from deface.error import ValidationError
-from deface.model import ExternalContext, Location, MediaType
+from deface.model import ExternalContext, Location, MediaMetaData, MediaType
 from deface.ingest import ingest_post
 from deface.validator import Validator
 
 def test_ingest_post():
-  data = Validator({
+  data = Validator[Any]({
     "timestamp": 665,
     "attachments": [
       {
@@ -67,6 +67,9 @@ def test_ingest_post():
               "creation_timestamp": 111,
               "media_metadata": {
                 "photo_metadata": {
+                  "camera_make": "",
+                  "camera_model": "",
+                  "orientation": 1,
                   "upload_ip": "2600:1010:b00f:3630:d02:42a:880d:a301"
                 }
               },
@@ -125,22 +128,26 @@ def test_ingest_post():
   assert media.creation_timestamp == 111
   assert media.description is None  # Removed because duplicate of post text.
   assert media.media_type == MediaType.PHOTO
-  assert media.metadata == {
-    'upload_ip': '2600:1010:b00f:3630:d02:42a:880d:a301'
-  }
+  assert media.metadata == MediaMetaData(
+    camera_make = '',
+    camera_model = '',
+    orientation = 1,
+  )
   assert media.thumbnail == 'thumbnail.jpg'
   assert media.title == 'Mobile Uploads'
+  assert media.upload_ip == '2600:1010:b00f:3630:d02:42a:880d:a301'
+  assert media.upload_timestamp == None
   assert media.uri == 'photo.jpg'
 
   media = post.media[1]
   assert media.creation_timestamp == 222
   assert media.description == 'A contested video'
   assert media.media_type == MediaType.VIDEO
-  assert media.metadata == {
-    'upload_ip': '2600:1010:b00f:3630:d02:42a:880d:a301'
-  }
+  assert media.metadata == None
   assert media.thumbnail is None
   assert media.title == 'Mobile Uploads'
+  assert media.upload_ip == '2600:1010:b00f:3630:d02:42a:880d:a301'
+  assert media.upload_timestamp == None
   assert media.uri == 'video.mp4'
 
   assert len(media.comments) == 2
@@ -158,7 +165,7 @@ def test_ingest_post():
   assert isinstance(post.external_context, ExternalContext)
   assert post.external_context.url == 'https://apparebit.com'
   assert post.name is None
-  assert post.place == (Location(
+  assert post.places == (Location(
     name='Somewhere',
     latitude=665.0,
     longitude=42.0,
