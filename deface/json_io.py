@@ -20,7 +20,7 @@ import re
 from binascii import unhexlify
 from typing import Any, Union
 
-JsonT = Union[None, bool, int, float, str, ]
+JsonT = Union[None, bool, int, float, str, list[Any], dict[str, Any]]
 
 _BROKEN_ESCAPE = re.compile(rb'\\u00([0-9a-f][0-9a-f])', re.I)
 
@@ -37,27 +37,43 @@ def restore_utf8(data: bytes) -> bytes:
   """
   return re.sub(_BROKEN_ESCAPE, lambda match: unhexlify(match.group(1)), data)
 
-def read_json(path: str) -> JsonT:
+def loads(data: bytes, **kwargs: Any) -> JsonT:
   """
-  Read the file with the given path as a JSON file with personal data exported
-  from Facebook. This function undoes Facebook's faulty encoding and then parses
-  the JSON.
+  Return the result of deserializing a value from the given JSON text. This
+  function simply wraps an invocation of the eponymous function in Python's
+  ``json`` package — after applying :py:func:`restore_utf8` to the given
+  ``data``. It passes the keyword arguments through.
   """
-  with open(path, 'rb') as file:
-    return json.loads(restore_utf8(file.read()))
+  return json.loads(restore_utf8(data), **kwargs)
 
 def default(value: Any) -> Union[str, dict[str, Any]]:
   """
   Convert the given value, which cannot be encoded as JSON, to an equivalent
-  value that can be encoded as JSON. This function returns the name of enum
-  constants and the equivalent dictionary for dataclasses. For all other values,
-  it raises a :py:class:`TypeError`.
+  value that can be encoded as JSON. For enum constants, this function returns
+  their names. For dataclasses, it returns a dictionary with their non-``None``
+  attributes. Similarly for objects with a ``__dict__`` attribute, it returns a
+  dictionary with their non-``None`` attributes.
+
+  :raises TypeError: indicates that the value does not match any of the above
+    cases.
   """
   if isinstance(value, enum.Enum):
     return value.name
-  elif dataclasses.is_dataclass(value):
-    return dataclasses.asdict(value)
-  raise TypeError(f'Value "{value}" cannot be encoded as JSON')
+
+  dct: dict[str, Any]
+  if dataclasses.is_dataclass(value):
+    dct = dataclasses.asdict(value)
+  elif hasattr(value, '__dict__'):
+    dct = value.__dict__
+  else:
+    raise TypeError(f'Value "{value}" cannot be encoded as JSON')
+  return { k: v for k, v in dct.items() if v is not None }
 
 def dumps(value: Any, **kwargs: Any) -> str:
+  """
+  Return the result of serializing the given value as JSON text. This function
+  simply wraps an invocation of the eponymous function in Python's ``json``
+  package. It uses :py:func:`default` as the ``default`` argument while passing
+  any other keyword arguments through.
+  """
   return json.dumps(value, default=default, **kwargs)
