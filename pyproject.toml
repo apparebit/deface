@@ -25,6 +25,12 @@ dynamic = ['description', 'version']
 # deface has no runtime dependencies beyond the Python standard library.
 dependencies = []
 
+[tool.flit.module]
+name = "deface"
+
+[project.scripts]
+deface = "deface.cli:main"
+
 [project.optional-dependencies]
 test = ["mypy", "pytest"]
 doc = [
@@ -33,9 +39,6 @@ doc = [
   "sphinx-argparse-cli",
   "sphinxext-opengraph"
 ]
-
-[project.scripts]
-deface = "deface.cli:main"
 
 [tool.mypy]
 files = ["deface/**/*.py"]
