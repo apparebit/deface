@@ -20,6 +20,6 @@ To run *deface*:
 $ deface -h
 ```
 
-Please see the documentation for more information about *deface*, including on
-usage and background. *deface* has been released as open source under the
-[Apache 2.0 license](LICENSE).
+Please see [the documentation](https://apparebit.github.io/deface/) for more
+information about *deface*, including on usage and background. *deface* has been
+released as open source under the [Apache 2.0 license](LICENSE).
