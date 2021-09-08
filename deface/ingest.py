@@ -29,6 +29,16 @@ from deface.model import (
 )
 from deface.validator import Validator
 
+__all__ = [
+  'ingest_into_history',
+  'ingest_post',
+  'ingest_media',
+  'ingest_location',
+  'ingest_external_context',
+  'ingest_event',
+  'ingest_comment'
+]
+
 _COMMENT_KEYS: set[str] = { 'author', 'comment', 'timestamp' }
 
 def ingest_comment(data: Validator[Any]) -> Comment:
@@ -86,11 +96,11 @@ def ingest_location(data: Validator[Any]) -> Location:
     fields['address'] = location_data['address'].to_string().value
 
   if 'coordinate' in location_data.value:
-    coordinates = location_data['coordinate'].to_object(
+    coordinate = location_data['coordinate'].to_object(
       valid_keys=_COORDINATE_KEYS
     )
-    fields['latitude'] = float(coordinates['latitude'].to_number().value)
-    fields['longitude'] = float(coordinates['longitude'].to_number().value)
+    fields['latitude'] = float(coordinate['latitude'].to_float().value)
+    fields['longitude'] = float(coordinate['longitude'].to_float().value)
 
   fields['name'] = location_data['name'].to_string().value
   if 'url' in location_data.value:
@@ -100,16 +110,20 @@ def ingest_location(data: Validator[Any]) -> Location:
 
 # ------------------------------------------------------------------------------
 
-_METADATA_KEYS: set[str] = {
+_MEDIA_METADATA_KEYS: set[str] = {
   'camera_make',
   'camera_model',
   'exposure',
   'focal_length',
   'f_stop',
   'iso_speed',
+  'latitude',
+  'longitude',
+  'modified_timestamp',
   'orientation',
   'original_width',
   'original_height',
+  'taken_timestamp',
   'upload_ip',
   'upload_timestamp',
 }
@@ -123,7 +137,7 @@ def ingest_metadata(
   media descriptor itself, this function adds them to the given
   ``media_fields``.
   """
-  metadata = data.to_object(valid_keys=_METADATA_KEYS)
+  metadata = data.to_object(valid_keys=_MEDIA_METADATA_KEYS)
 
   media_fields['upload_ip'] = metadata['upload_ip'].to_string().value
   if 'upload_timestamp' in metadata.value:
@@ -144,12 +158,20 @@ def ingest_metadata(
     fields['f_stop'] = metadata['f_stop'].to_string().value
   if 'iso_speed' in metadata.value:
     fields['iso_speed'] = metadata['iso_speed'].to_integer().value
+  if 'latitude' in metadata.value:
+    fields['latitude'] = metadata['latitude'].to_float().value
+  if 'longitude' in metadata.value:
+    fields['longitude'] = metadata['longitude'].to_float().value
+  if 'modified_timestamp' in metadata.value:
+    fields['modified_timestamp'] = metadata['modified_timestamp'].to_integer().value
   if 'orientation' in metadata.value:
     fields['orientation'] = metadata['orientation'].to_integer().value
   if 'original_height' in metadata.value:
     fields['original_height'] = metadata['original_height'].to_integer().value
   if 'original_width' in metadata.value:
     fields['original_width'] = metadata['original_width'].to_integer().value
+  if 'taken_timestamp' in metadata.value:
+    fields['taken_timestamp'] = metadata['taken_timestamp'].to_integer().value
 
   return MediaMetaData(**fields) if len(fields) > 0 else None
 
@@ -165,7 +187,7 @@ _MEDIA_KEYS: set[str] = {
   'uri',
 }
 
-_MEDIA_METADATA_KEYS: set[str] = { 'photo_metadata', 'video_metadata' }
+_METADATA_KEYS: set[str] = { 'photo_metadata', 'video_metadata' }
 
 def ingest_media(data: Validator[Any]) -> Media:
   """
@@ -188,7 +210,7 @@ def ingest_media(data: Validator[Any]) -> Media:
     fields['description'] = media_data['description'].to_string().value
 
   metadata = media_data['media_metadata'].to_object(
-    valid_keys=_MEDIA_METADATA_KEYS, singleton=True
+    valid_keys=_METADATA_KEYS, singleton=True
   )
   metadata_key = metadata.only_key
   fields['media_type'] = (
