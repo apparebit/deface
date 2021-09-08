@@ -1,0 +1,1082 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta property="og:title" content="deface package" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="deface.html" />
+  <meta property="og:description" content="deface.cli: deface.error: deface.ingest: deface.logger: deface.model: deface.serde: deface.validator:" />
+  <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Python API" href="api.html" />
+
+    <meta name="generator" content="sphinx-4.1.2, furo 2021.08.31"/>
+        <title>deface package - deface 0.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=c7c65a82b42f6b978e58466c1e9ef2509836d916" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">deface 0.5.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">deface 0.5.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Deface</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design.html">Design Considerations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="api.html">Python API</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">deface package</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/apparebit/deface">Source Code</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/apparebit/deface/issues">Issue Tracker</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://pypi.org/project/deface-social/">Package</a></li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <article role="main">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <section id="deface-package">
+<h1>deface package<a class="headerlink" href="#deface-package" title="Permalink to this headline">¶</a></h1>
+<section id="module-deface.cli">
+<span id="deface-cli"></span><h2>deface.cli<a class="headerlink" href="#module-deface.cli" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.cli.create_parser">
+<span class="sig-prename descclassname"><span class="pre">deface.cli.</span></span><span class="sig-name descname"><span class="pre">create_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">argparse.ArgumentParser</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/cli.py#L28"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.cli.create_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the argument parser for the deface command line tool.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.cli.main">
+<span class="sig-prename descclassname"><span class="pre">deface.cli.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/cli.py#L74"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.cli.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>A command line tool to convert Facebook posts from their personal archive
+format to a simpler, cleaner version. The tool reads in one or more files with
+possibly overlapping post data, simplifies the structure of the data,
+eliminates redundant information, reconciles the records into a single
+timeline, and then exports that timeline of posts as JSON.</p>
+</dd></dl>
+</section>
+<section id="module-deface.error">
+<span id="deface-error"></span><h2>deface.error<a class="headerlink" href="#module-deface.error" title="Permalink to this headline">¶</a></h2>
+<dl class="py exception">
+<dt class="sig sig-object py" id="deface.error.DefaceError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">deface.error.</span></span><span class="sig-name descname"><span class="pre">DefaceError</span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/error.py#L17"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.error.DefaceError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>The base class for errors specific to this package.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="deface.error.MergeError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">deface.error.</span></span><span class="sig-name descname"><span class="pre">MergeError</span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/error.py#L29"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.error.MergeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deface.error.DefaceError" title="deface.error.DefaceError"><code class="xref py py-class docutils literal notranslate"><span class="pre">deface.error.DefaceError</span></code></a></p>
+<p>An error indicating that two posts are unrelated and cannot be merged.</p>
+</dd></dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="deface.error.ValidationError">
+<em class="property"><span class="pre">exception</span> </em><span class="sig-prename descclassname"><span class="pre">deface.error.</span></span><span class="sig-name descname"><span class="pre">ValidationError</span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/error.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.error.ValidationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#deface.error.DefaceError" title="deface.error.DefaceError"><code class="xref py py-class docutils literal notranslate"><span class="pre">deface.error.DefaceError</span></code></a></p>
+<p>An error indicating that JSON data does not have expected fields or type.</p>
+</dd></dl>
+</section>
+<section id="module-deface.ingest">
+<span id="deface-ingest"></span><h2>deface.ingest<a class="headerlink" href="#module-deface.ingest" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_comment">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Comment" title="deface.model.Comment"><span class="pre">deface.model.Comment</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L44"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_comment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as a comment.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_event">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Event" title="deface.model.Event"><span class="pre">deface.model.Event</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L58"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as an event.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_external_context">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_external_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.ExternalContext" title="deface.model.ExternalContext"><span class="pre">deface.model.ExternalContext</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L72"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_external_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as an external context.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_into_history">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_into_history</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.PostHistory" title="deface.model.PostHistory"><span class="pre">deface.model.PostHistory</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L353"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_into_history" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as list of posts into the
+given history. This function returns a list of ingestion errors.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_location">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_location</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Location" title="deface.model.Location"><span class="pre">deface.model.Location</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L89"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as a location.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_media">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Media" title="deface.model.Media"><span class="pre">deface.model.Media</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L192"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_media" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as a media descriptor.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.ingest.ingest_post">
+<span class="sig-prename descclassname"><span class="pre">deface.ingest.</span></span><span class="sig-name descname"><span class="pre">ingest_post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Post" title="deface.model.Post"><span class="pre">deface.model.Post</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/ingest.py#L290"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.ingest.ingest_post" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ingest the JSON data value wrapped by the validator as a post.</p>
+</dd></dl>
+</section>
+<section id="module-deface.logger">
+<span id="deface-logger"></span><h2>deface.logger<a class="headerlink" href="#module-deface.logger" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.logger.Level">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.logger.</span></span><span class="sig-name descname"><span class="pre">Level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L30"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.logger.Level.ERROR">
+<span class="sig-name descname"><span class="pre">ERROR</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'🛑</span> <span class="pre">'</span></em><a class="headerlink" href="#deface.logger.Level.ERROR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.logger.Level.INFO">
+<span class="sig-name descname"><span class="pre">INFO</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'ℹ️</span> <span class="pre">'</span></em><a class="headerlink" href="#deface.logger.Level.INFO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.logger.Level.WARN">
+<span class="sig-name descname"><span class="pre">WARN</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'⚠️</span> <span class="pre">'</span></em><a class="headerlink" href="#deface.logger.Level.WARN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.logger.Logger">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.logger.</span></span><span class="sig-name descname"><span class="pre">Logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">stream:</span> <span class="pre">TextIO</span> <span class="pre">=</span> <span class="pre">&lt;_io.TextIOWrapper</span> <span class="pre">name='&lt;stderr&gt;'</span> <span class="pre">mode='w'</span> <span class="pre">encoding='utf-8'&gt;</span></em>, <em class="sig-param"><span class="pre">prefix:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">''</span></em>, <em class="sig-param"><span class="pre">use_emoji:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></em>, <em class="sig-param"><span class="pre">use_color:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True</span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L35"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A simple console logger. By default, the logger prefixes messages with
+appropriate emoji. If the underlying <code class="docutils literal notranslate"><span class="pre">stream</span></code> is a TTY, it also uses ANSI
+escape codes to style messages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stream</strong> – The stream to write to, which defaults to standard error.</p></li>
+<li><p><strong>use_emoji</strong> – The flag for using emoji, which defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.done">
+<span class="sig-name descname"><span class="pre">done</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L129"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a summarizing message at completion of a tool run. If the output
+stream is a TTY, the message is highlighted in red or green, depending on
+whether any errors have been reported.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>message</strong> – The farewell message.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.error">
+<span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">err</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Exception</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">extras</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L110"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the given error message followed by the JSON representation of any
+additional exception arguments as well as additional method arguments.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="deface.logger.Logger.error_count">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">error_count</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#deface.logger.Logger.error_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of errors reported with <a class="reference internal" href="#deface.logger.Logger.error" title="deface.logger.Logger.error"><code class="xref py py-meth docutils literal notranslate"><span class="pre">error()</span></code></a> so far.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.info">
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">extras</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L125"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print an informational message.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.print">
+<span class="sig-name descname"><span class="pre">print</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L60"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.print" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the given text followed by a newline.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.print_bold">
+<span class="sig-name descname"><span class="pre">print_bold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L73"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.print_bold" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the text in bold followed by a newline.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.print_in_green">
+<span class="sig-name descname"><span class="pre">print_in_green</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L77"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.print_in_green" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the text in green followed by a newline.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.print_in_red">
+<span class="sig-name descname"><span class="pre">print_in_red</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L81"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.print_in_red" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log the text in red followed by a newline.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.print_json">
+<span class="sig-name descname"><span class="pre">print_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L66"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.print_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log a nicely indented JSON representation of the given value</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.logger.Logger.warn">
+<span class="sig-name descname"><span class="pre">warn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">warning</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Warning</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">extras</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L118"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.Logger.warn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print a warning message.</p>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.logger.pluralize">
+<span class="sig-prename descclassname"><span class="pre">deface.logger.</span></span><span class="sig-name descname"><span class="pre">pluralize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noun</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'s'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/logger.py#L24"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.logger.pluralize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</section>
+<section id="module-deface.model">
+<span id="deface-model"></span><h2>deface.model<a class="headerlink" href="#module-deface.model" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.Comment">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">Comment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">author</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comment</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L46"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Comment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A comment on a post, photo, or video.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Comment.author">
+<span class="sig-name descname"><span class="pre">author</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.Comment.author" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Comment.comment">
+<span class="sig-name descname"><span class="pre">comment</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.Comment.comment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Comment.timestamp">
+<span class="sig-name descname"><span class="pre">timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#deface.model.Comment.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.Event">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">Event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L56"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An event</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Event.end_timestamp">
+<span class="sig-name descname"><span class="pre">end_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#deface.model.Event.end_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>The end of the event or zero for events without a defined duration.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Event.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.Event.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The event’s name.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Event.start_timestamp">
+<span class="sig-name descname"><span class="pre">start_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#deface.model.Event.start_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>The beginning of the event.</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.ExternalContext">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">ExternalContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L71"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.ExternalContext" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The external context for a post. In the original Facebook post data, a post’s
+external context is part of the attachments:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">"attachments"</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">"data"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="nt">"external_context"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">"name"</span><span class="p">:</span> <span class="s2">"Instagram Post by Ro\u00cc\u0081isi\u00cc\u0081n Murphy"</span><span class="p">,</span>
+            <span class="nt">"source"</span><span class="p">:</span> <span class="s2">"instagram.com"</span><span class="p">,</span>
+            <span class="nt">"url"</span><span class="p">:</span> <span class="s2">"https://www.instagram.com/p/B_13ojcD6Fh/"</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Unusually, the example includes a <code class="docutils literal notranslate"><span class="pre">name</span></code> and <code class="docutils literal notranslate"><span class="pre">source</span></code> in addition to the
+<code class="docutils literal notranslate"><span class="pre">url</span></code>. It also illustrates the mojibake resulting from Facebook erroneously
+double encoding all text. The <code class="docutils literal notranslate"><span class="pre">name</span></code> should read <code class="docutils literal notranslate"><span class="pre">Instagram</span> <span class="pre">Post</span> <span class="pre">by</span>
+<span class="pre">Róisín</span> <span class="pre">Murphy</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.ExternalContext.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.ExternalContext.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the website or, if article, its title. Not a common attribute.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.ExternalContext.source">
+<span class="sig-name descname"><span class="pre">source</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.ExternalContext.source" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the website or, if article, the publication’s name. Not a common
+attribute.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.ExternalContext.url">
+<span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.ExternalContext.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>A URL linking to external content.</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.Location">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">Location</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L116"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Location" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A location in the real world. In the original Facebook post data, a post’s
+place is part of the attachments:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">"attachments"</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">"data"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="nt">"place"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">"name"</span><span class="p">:</span> <span class="s2">"Whitney Museum of American Art"</span><span class="p">,</span>
+            <span class="nt">"coordinate"</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">"latitude"</span><span class="p">:</span> <span class="mf">40.739541735</span><span class="p">,</span>
+              <span class="nt">"longitude"</span><span class="p">:</span> <span class="mf">-74.009095020556</span>
+            <span class="p">},</span>
+            <span class="nt">"address"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span>
+            <span class="nt">"url"</span><span class="p">:</span> <span class="s2">"https://www.facebook.com/whitneymuseum/"</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">coordinate</span></code> is stripped during ingestion to hoist <code class="docutils literal notranslate"><span class="pre">latitude</span></code> and
+<code class="docutils literal notranslate"><span class="pre">longitude</span></code> into the location record. In rare cases, the <code class="docutils literal notranslate"><span class="pre">coordinate</span></code> may
+be missing from the original Facebook data, hence both the <code class="docutils literal notranslate"><span class="pre">latitude</span></code> and
+<code class="docutils literal notranslate"><span class="pre">longitude</span></code> attributes are optional.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Location.address">
+<span class="sig-name descname"><span class="pre">address</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Location.address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.Location.is_mergeable_with">
+<span class="sig-name descname"><span class="pre">is_mergeable_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.Location" title="deface.model.Location"><span class="pre">deface.model.Location</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L166"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Location.is_mergeable_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine whether this location can be merged with the other location. For
+two locations to be mergeable, they must have identical <code class="docutils literal notranslate"><span class="pre">name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">address</span></code>, <code class="docutils literal notranslate"><span class="pre">latitude</span></code>, and <code class="docutils literal notranslate"><span class="pre">longitude</span></code> attributes. Furthermore, they
+must either have identical <code class="docutils literal notranslate"><span class="pre">url</span></code> attributes or one location has a string
+value while the other location has <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Location.latitude">
+<span class="sig-name descname"><span class="pre">latitude</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Location.latitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>The latitude. In the original Facebook post data, this attribute is nested
+inside the <code class="docutils literal notranslate"><span class="pre">coordinate</span></code> attribute.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Location.longitude">
+<span class="sig-name descname"><span class="pre">longitude</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Location.longitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>The longitude. In the original Facebook data, this attribute is nested inside
+the <code class="docutils literal notranslate"><span class="pre">coordinate</span></code> attribute.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.Location.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.Location" title="deface.model.Location"><span class="pre">deface.model.Location</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Location" title="deface.model.Location"><span class="pre">deface.model.Location</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L186"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Location.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge this location with the given location. In case of identical URLs, this
+method returns <code class="docutils literal notranslate"><span class="pre">self</span></code>. In case of divergent URLs, this method returns the
+instance with the URL value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.MergeError" title="deface.error.MergeError"><strong>MergeError</strong></a> – indicates that the locations differ in more than their
+URLs and thus cannot be merged.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Location.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.Location.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Location.url">
+<span class="sig-name descname"><span class="pre">url</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Location.url" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.Media">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">Media</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comments</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">media_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.MediaType" title="deface.model.MediaType"><span class="pre">deface.model.MediaType</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">uri</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upload_ip</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creation_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.model.MediaMetaData" title="deface.model.MediaMetaData"><span class="pre">deface.model.MediaMetaData</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thumbnail</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upload_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L229"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Media" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A posted photo or video.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><em class="property"><span class="pre">:</span> <span class="pre">tuple</span></em><a class="headerlink" href="#deface.model.Media.comments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Comments specifically on the photo or video.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.creation_timestamp">
+<span class="sig-name descname"><span class="pre">creation_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Media.creation_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Media.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>A description of the photo or video. In the original Facebook post data, the
+value for this attribute may be duplicated amongst all of a post’s media
+objects as well as the post’s body. Whereever safe, such redundancy is
+resolved in favor of the post’s body. As a result, any remaining description
+on a media record is unique to that photo or video.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.media_type">
+<span class="sig-name descname"><span class="pre">media_type</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="#deface.model.MediaType" title="deface.model.MediaType"><span class="pre">deface.model.MediaType</span></a></em><a class="headerlink" href="#deface.model.Media.media_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The media type, which is derived from the metadata key in the original
+data.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.model.MediaMetaData" title="deface.model.MediaMetaData"><span class="pre">deface.model.MediaMetaData</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Media.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>The metadata for the photo or video.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.thumbnail">
+<span class="sig-name descname"><span class="pre">thumbnail</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Media.thumbnail" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.title">
+<span class="sig-name descname"><span class="pre">title</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Media.title" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.upload_ip">
+<span class="sig-name descname"><span class="pre">upload_ip</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.Media.upload_ip" title="Permalink to this definition">¶</a></dt>
+<dd><p>The IP address from which the photo or video was uploaded from. In the
+original Facebook post data, this attribute is part of the  <code class="docutils literal notranslate"><span class="pre">photo_metadata</span></code>
+or <code class="docutils literal notranslate"><span class="pre">video_metadata</span></code> object nested inside the media object’s
+<code class="docutils literal notranslate"><span class="pre">media_metadata</span></code>. It also is the only attribute reliably included with that
+object. However, since <code class="docutils literal notranslate"><span class="pre">upload_ip</span></code> really is part of Facebook’s data on the
+use of the photo or video, it is hoisted into the media record during
+ingestion.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.upload_timestamp">
+<span class="sig-name descname"><span class="pre">upload_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Media.upload_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>The timestamp at which the photo or video was uploaded. In the original
+Facebook post data, this field is part of the  <code class="docutils literal notranslate"><span class="pre">photo_metadata</span></code> or
+<code class="docutils literal notranslate"><span class="pre">video_metadata</span></code> object nested inside the media object’s <code class="docutils literal notranslate"><span class="pre">media_metadata</span></code>.
+However, since it really is part of Facebook’s data on the use of the photo or
+video, it is hoisted into the media record during ingestion.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Media.uri">
+<span class="sig-name descname"><span class="pre">uri</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.model.Media.uri" title="Permalink to this definition">¶</a></dt>
+<dd><p>The absolute path to the photo or video within the personal data archive. In
+terms of <cite>RFC 3986 &lt;https://www.rfc-editor.org/rfc/rfc3986.txt&gt;</cite>, the
+attribute provides a <em>relative reference</em>, i.e., it lacks a scheme such as
+<code class="docutils literal notranslate"><span class="pre">file:</span></code>.</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">MediaMetaData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">camera_make</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_model</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exposure</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">focal_length</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f_stop</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iso_speed</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">latitude</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitude</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_height</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_width</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">taken_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L202"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.MediaMetaData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The metadata for a photo or video. In the original Facebook post data, this
+object also includes the <code class="docutils literal notranslate"><span class="pre">upload_ip</span></code> and <code class="docutils literal notranslate"><span class="pre">upload_timestamp</span></code>, but since
+both attributes describe the use of the photo or video on Facebook and not the
+photo or video itself, they are hoisted into the <a class="reference internal" href="#deface.model.Media" title="deface.model.Media"><code class="xref py py-class docutils literal notranslate"><span class="pre">Media</span></code></a> record. The
+remaining attributes, even if present in the original Facebook post data, tend
+to be meaningless, i.e., are either the empty string or zero. Also, while the
+remaining attributes would be meaningful for both photos and videos, the are
+found only on photos.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.camera_make">
+<span class="sig-name descname"><span class="pre">camera_make</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.camera_make" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.camera_model">
+<span class="sig-name descname"><span class="pre">camera_model</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.camera_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.exposure">
+<span class="sig-name descname"><span class="pre">exposure</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.exposure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.f_stop">
+<span class="sig-name descname"><span class="pre">f_stop</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.f_stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.focal_length">
+<span class="sig-name descname"><span class="pre">focal_length</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.focal_length" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.iso_speed">
+<span class="sig-name descname"><span class="pre">iso_speed</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.iso_speed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.latitude">
+<span class="sig-name descname"><span class="pre">latitude</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.latitude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.longitude">
+<span class="sig-name descname"><span class="pre">longitude</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.longitude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.modified_timestamp">
+<span class="sig-name descname"><span class="pre">modified_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.modified_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.orientation">
+<span class="sig-name descname"><span class="pre">orientation</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.orientation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.original_height">
+<span class="sig-name descname"><span class="pre">original_height</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.original_height" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.original_width">
+<span class="sig-name descname"><span class="pre">original_width</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.original_width" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaMetaData.taken_timestamp">
+<span class="sig-name descname"><span class="pre">taken_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.MediaMetaData.taken_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.MediaType">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">MediaType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L38"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.MediaType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration of media types.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaType.PHOTO">
+<span class="sig-name descname"><span class="pre">PHOTO</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'PHOTO'</span></em><a class="headerlink" href="#deface.model.MediaType.PHOTO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.MediaType.VIDEO">
+<span class="sig-name descname"><span class="pre">VIDEO</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'VIDEO'</span></em><a class="headerlink" href="#deface.model.MediaType.VIDEO" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.Post">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">Post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">media</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">places</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backdated_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.model.Event" title="deface.model.Event"><span class="pre">deface.model.Event</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">external_context</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.model.ExternalContext" title="deface.model.ExternalContext"><span class="pre">deface.model.ExternalContext</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">post</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_timestamp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L288"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Post" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A post on Facebook.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.backdated_timestamp">
+<span class="sig-name descname"><span class="pre">backdated_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.backdated_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>A backdated timestamp. Its semantics are unclear.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.event">
+<span class="sig-name descname"><span class="pre">event</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.model.Event" title="deface.model.Event"><span class="pre">deface.model.Event</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.external_context">
+<span class="sig-name descname"><span class="pre">external_context</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.model.ExternalContext" title="deface.model.ExternalContext"><span class="pre">deface.model.ExternalContext</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.external_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>An external context, typically with URL only.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.Post.is_mergeable_with">
+<span class="sig-name descname"><span class="pre">is_mergeable_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.Post" title="deface.model.Post"><span class="pre">deface.model.Post</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L361"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Post.is_mergeable_with" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine whether this post can be merged with the given post. The two posts
+are mergeable if they differ in their media at most.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.Post.is_simultaneous">
+<span class="sig-name descname"><span class="pre">is_simultaneous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.Post" title="deface.model.Post"><span class="pre">deface.model.Post</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L355"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Post.is_simultaneous" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine whether this post and the other post have the same timestamp.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.media">
+<span class="sig-name descname"><span class="pre">media</span></span><em class="property"><span class="pre">:</span> <span class="pre">tuple</span></em><a class="headerlink" href="#deface.model.Post.media" title="Permalink to this definition">¶</a></dt>
+<dd><p>The photos and videos attached to a post.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.Post.merge">
+<span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.Post" title="deface.model.Post"><span class="pre">deface.model.Post</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.model.Post" title="deface.model.Post"><span class="pre">deface.model.Post</span></a></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L379"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.Post.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge this post with the other post. If the two posts differ only in their
+media, this method returns a new post that combines the media from both
+posts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> – the post to merge with.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#deface.error.MergeError" title="deface.error.MergeError"><strong>MergeError</strong></a> – indicates that the two posts differ in more than their
+media or have different media descriptors for the same photo or video.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name for a recommendations.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.places">
+<span class="sig-name descname"><span class="pre">places</span></span><em class="property"><span class="pre">:</span> <span class="pre">tuple</span></em><a class="headerlink" href="#deface.model.Post.places" title="Permalink to this definition">¶</a></dt>
+<dd><p>The places for this post. Almost all posts have at most one
+<a class="reference internal" href="#deface.model.Location" title="deface.model.Location"><code class="xref py py-class docutils literal notranslate"><span class="pre">deface.model.Location</span></code></a>. Occasionally, a post has two locations that
+share the same address, latitude, longitude, and name but differ on
+<a class="reference internal" href="#deface.model.Location.url" title="deface.model.Location.url"><code class="xref py py-attr docutils literal notranslate"><span class="pre">deface.model.Location.url</span></code></a>, with one location having <code class="docutils literal notranslate"><span class="pre">None</span></code> and
+the other having some value. In that case,
+<a class="reference internal" href="#deface.ingest.ingest_post" title="deface.ingest.ingest_post"><code class="xref py py-func docutils literal notranslate"><span class="pre">deface.ingest.ingest_post()</span></code></a> eliminates the redundant location object
+while keeping <code class="docutils literal notranslate"><span class="pre">url</span></code>’s value. Posts with two or more distinct locations seem
+rare but do occur.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.post">
+<span class="sig-name descname"><span class="pre">post</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.post" title="Permalink to this definition">¶</a></dt>
+<dd><p>The post’s textual body.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.tags">
+<span class="sig-name descname"><span class="pre">tags</span></span><em class="property"><span class="pre">:</span> <span class="pre">tuple</span></em><a class="headerlink" href="#deface.model.Post.tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>The tags for a post, including friends and pages.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.text">
+<span class="sig-name descname"><span class="pre">text</span></span><em class="property"><span class="pre">:</span> <span class="pre">list</span></em><a class="headerlink" href="#deface.model.Post.text" title="Permalink to this definition">¶</a></dt>
+<dd><p>The text introducing a shared memory.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.timestamp">
+<span class="sig-name descname"><span class="pre">timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><a class="headerlink" href="#deface.model.Post.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>The time a post was made in seconds since the beginning of the Unix epoch on
+January 1, 1970 at midnight.</p>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.title">
+<span class="sig-name descname"><span class="pre">title</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.title" title="Permalink to this definition">¶</a></dt>
+<dd><p>The title of a post. This field is filled in automatically and hence generic.
+Starting with more common ones, variations include:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Alice</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alice</span> <span class="pre">updated</span> <span class="pre">her</span> <span class="pre">status.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alice</span> <span class="pre">shared</span> <span class="pre">a</span> <span class="pre">memory.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alice</span> <span class="pre">wrote</span> <span class="pre">on</span> <span class="pre">Bob's</span> <span class="pre">timeline.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alice</span> <span class="pre">is</span> <span class="pre">feeling</span> <span class="pre">blessed.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Alice</span> <span class="pre">was</span> <span class="pre">with</span> <span class="pre">Bob.</span></code></p></li>
+</ul>
+</dd></dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="deface.model.Post.update_timestamp">
+<span class="sig-name descname"><span class="pre">update_timestamp</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#deface.model.Post.update_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nominally, the time of an update. In practice, if a post includes this field,
+its value appears to be the same as that of <code class="docutils literal notranslate"><span class="pre">timestamp</span></code>. In other words, the
+field has devolved to a flag indicating whether a post was updated.</p>
+</dd></dl>
+</dd></dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.model.PostHistory">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">PostHistory</span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L417"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.PostHistory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A history of posts. This class tracks added posts by timestamp so that it can
+merge posts that only differ in media while also eliminating duplicate posts.
+The latter is important when ingesting posts from more than one personal data
+archive, since the archives may just overlap in time.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.PostHistory.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">post</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#deface.model.Post" title="deface.model.Post"><span class="pre">deface.model.Post</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L427"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.PostHistory.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the post to the history of posts. If the history already includes one or
+more posts with the same timestamp, this method tries merging the given post
+with each of those posts and replaces the post upon a successful merge.
+Otherwise, this method adds the post to the history.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.model.PostHistory.timeline">
+<span class="sig-name descname"><span class="pre">timeline</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L456"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.PostHistory.timeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a timeline for the history of posts. The timeline includes all posts
+from the history in chronological order.</p>
+</dd></dl>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.model.find_simultaneous_posts">
+<span class="sig-prename descclassname"><span class="pre">deface.model.</span></span><span class="sig-name descname"><span class="pre">find_simultaneous_posts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeline</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">list</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/model.py#L471"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.model.find_simultaneous_posts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all simultaneous posts on the given timeline and return the ranges of
+their indexes.</p>
+</dd></dl>
+</section>
+<section id="module-deface.serde">
+<span id="deface-serde"></span><h2>deface.serde<a class="headerlink" href="#module-deface.serde" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.serde.dumps">
+<span class="sig-prename descclassname"><span class="pre">deface.serde.</span></span><span class="sig-name descname"><span class="pre">dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/serde.py#L86"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.serde.dumps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the result of serializing the given value as JSON text. This function
+simply wraps an invocation of the eponymous function in Python’s <code class="docutils literal notranslate"><span class="pre">json</span></code>
+package — after applying <a class="reference internal" href="#deface.serde.prepare" title="deface.serde.prepare"><code class="xref py py-func docutils literal notranslate"><span class="pre">prepare()</span></code></a> to the given <code class="docutils literal notranslate"><span class="pre">data</span></code>. It passes
+the keyword arguments through.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.serde.loads">
+<span class="sig-prename descclassname"><span class="pre">deface.serde.</span></span><span class="sig-name descname"><span class="pre">loads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bytes</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">bool</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">list</span><span class="p"><span class="pre">,</span> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/serde.py#L46"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.serde.loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the result of deserializing a value from the given JSON text. This
+function simply wraps an invocation of the eponymous function in Python’s
+<code class="docutils literal notranslate"><span class="pre">json</span></code> package — after applying <a class="reference internal" href="#deface.serde.restore_utf8" title="deface.serde.restore_utf8"><code class="xref py py-func docutils literal notranslate"><span class="pre">restore_utf8()</span></code></a> to the given
+<code class="docutils literal notranslate"><span class="pre">data</span></code>. It passes the keyword arguments through.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.serde.prepare">
+<span class="sig-prename descclassname"><span class="pre">deface.serde.</span></span><span class="sig-name descname"><span class="pre">prepare</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/serde.py#L61"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.serde.prepare" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the given value for serialization to JSON. This function recursively
+replaces enumeration constants with their names, list and tuples with
+equivalent lists, and dataclasses and dictionaries with equivalent
+dictionaries. While generating equivalent dictionaries, it also filters out
+entries that are <code class="docutils literal notranslate"><span class="pre">None</span></code>, the empty list <code class="docutils literal notranslate"><span class="pre">[]</span></code>, or the empty tuple <code class="docutils literal notranslate"><span class="pre">()</span></code>.
+All other values remain unchanged.</p>
+</dd></dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="deface.serde.restore_utf8">
+<span class="sig-prename descclassname"><span class="pre">deface.serde.</span></span><span class="sig-name descname"><span class="pre">restore_utf8</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bytes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/serde.py#L35"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.serde.restore_utf8" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restore the UTF-8 encoding for files exported from Facebook. Such files may
+appear to be valid JSON at first but nonetheless encode all non-ASCII
+characters incorrectly. Notably, what should just be UTF-8 byte values are
+Unicode escape sequences of the form <code class="docutils literal notranslate"><span class="pre">\u00xx</span></code>. This function undoes the
+damage. It should be invoked on the bytes of the raw JSON text, before
+parsing.</p>
+</dd></dl>
+</section>
+<section id="module-deface.validator">
+<span id="deface-validator"></span><h2>deface.validator<a class="headerlink" href="#module-deface.validator" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="deface.validator.Validator">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">deface.validator.</span></span><span class="sig-name descname"><span class="pre">Validator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">deface.validator.T</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">deface.validator.T</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L28"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">deface.validator.T</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L183"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.__getitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index the current value with the given key to create a new child validator.
+The given key becomes the new validator’s key and the result of the indexing
+operation becomes the new validator’s value. The new validator’s parent is
+this validator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TypeError</strong> – indicates that the current value is neither list nor
+object, that the key is not an integer even though the current value is a
+list, or that the key is not a string even though the current value is an
+object.</p></li>
+<li><p><strong>IndexError</strong> – indicates that the integer key is out of bounds for the
+current list value.</p></li>
+<li><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates that the required field named by the
+given key for the current object value is missing.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="deface.validator.Validator.filename">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">filename</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.validator.Validator.filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the filename for the file with the JSON data.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.items">
+<span class="sig-name descname"><span class="pre">items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">collections.abc.Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">deface.validator.T</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L148"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an iterator over the current list value’s items. Each item is wrapped in
+the appropriate validator to continue validating the JSON data. If the
+current value is not a list, this method raises an assertion error.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="deface.validator.Validator.keypath">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">keypath</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.validator.Validator.keypath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine the key path for this validator value. The key path is composed
+from list items, formatted as say <code class="docutils literal notranslate"><span class="pre">[42]</span></code>, and object fields, formatted as
+<code class="docutils literal notranslate"><span class="pre">.answer</span></code> for fields named with Python identifiers or <code class="docutils literal notranslate"><span class="pre">["42"]</span></code>
+otherwise.</p>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="deface.validator.Validator.only_key">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">only_key</span></span><em class="property"><span class="pre">:</span> <span class="pre">str</span></em><a class="headerlink" href="#deface.validator.Validator.only_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the only key. If the current value is a singleton object, this method
+returns the only key. Otherwise, it raises an assertion error.</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.raise_invalid">
+<span class="sig-name descname"><span class="pre">raise_invalid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">NoReturn</span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L96"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.raise_invalid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise a validation error for the current value. The error message is
+automatically formatted as the character sequence consisting of filename,
+keypath, a space, and the given message string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates a malformed JSON object.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.to_float">
+<span class="sig-name descname"><span class="pre">to_float</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L117"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.to_float" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coerce the current value to an integral or floating point number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates that the current value is neither an
+integer nor a floating point number.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.to_integer">
+<span class="sig-name descname"><span class="pre">to_integer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L107"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.to_integer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coerce the current value to an integer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates that the current value is not an integer.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.to_list">
+<span class="sig-name descname"><span class="pre">to_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.to_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coerce the current value to a list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates that the current value is not a list.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.to_object">
+<span class="sig-name descname"><span class="pre">to_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valid_keys</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">set</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">singleton</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L159"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.to_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coerce the current value to an object. If <code class="docutils literal notranslate"><span class="pre">valid_keys</span></code> are given, this
+method validates the object’s fields against the given field names. If
+<code class="docutils literal notranslate"><span class="pre">singleton</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, the object must have exactly one field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates that the current value is not an object,
+not an object with a single key, or has a field with unknown name.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="deface.validator.Validator.to_string">
+<span class="sig-name descname"><span class="pre">to_string</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="#deface.validator.Validator" title="deface.validator.Validator"><span class="pre">deface.validator.Validator</span></a><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/apparebit/deface/blob/b7e08d5f35a2b8e02a3d21efeb634187fca10074/deface/validator.py#L128"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#deface.validator.Validator.to_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coerce the current value to a string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#deface.error.ValidationError" title="deface.error.ValidationError"><strong>ValidationError</strong></a> – indicates that the current value is not a string.</p>
+</dd>
+</dl>
+</dd></dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="deface.validator.Validator.value">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="pre">:</span> <span class="pre">deface.validator.T</span></em><a class="headerlink" href="#deface.validator.Validator.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the current value.</p>
+</dd></dl>
+</dd></dl>
+</section>
+</section>
+
+      </article>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="api.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Python API</div>
+                
+              </div>
+            </a>
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; 2021, Robert Grimm
+            |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+            |
+            <a class="muted-link" href="_sources/deface.rst.txt"
+               rel="nofollow">
+              Show Source
+            </a>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">deface package</a><ul>
+<li><a class="reference internal" href="#module-deface.cli">deface.cli</a></li>
+<li><a class="reference internal" href="#module-deface.error">deface.error</a></li>
+<li><a class="reference internal" href="#module-deface.ingest">deface.ingest</a></li>
+<li><a class="reference internal" href="#module-deface.logger">deface.logger</a></li>
+<li><a class="reference internal" href="#module-deface.model">deface.model</a></li>
+<li><a class="reference internal" href="#module-deface.serde">deface.serde</a></li>
+<li><a class="reference internal" href="#module-deface.validator">deface.validator</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/main.js"></script>
+    </body>
+</html>

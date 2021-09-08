@@ -1,0 +1,364 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta property="og:title" content="Design Considerations" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="design.html" />
+  <meta property="og:description" content="The design and implementation of deface adhere to three principles: Preserve independent semantic concepts as records. Also preserve all key, value pairs within those records. Critically, the immed..." />
+  <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Motivation" href="motivation.html" />
+
+    <meta name="generator" content="sphinx-4.1.2, furo 2021.08.31"/>
+        <title>Design Considerations - deface 0.5.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=c7c65a82b42f6b978e58466c1e9ef2509836d916" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=16fb25fabf47304eee183a5e9af80b1ba98259b1" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  body[data-theme="dark"] {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+  }
+</style></head>
+  <body>
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" />
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">deface 0.5.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">deface 0.5.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">Deface</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Background:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="motivation.html">Motivation</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Design Considerations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Usage:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="api.html">Python API</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="deface.html">deface package</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project Links</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/apparebit/deface">Source Code</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/apparebit/deface/issues">Issue Tracker</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://pypi.org/project/deface-social/">Package</a></li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <article role="main">
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <section id="design-considerations">
+<h1>Design Considerations<a class="headerlink" href="#design-considerations" title="Permalink to this headline">¶</a></h1>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>This page explains how <em>deface</em> simplifies the data and eliminates redundant
+fields while ensuring that all content is preserved. It may be more
+approachable if you first run the tool and compare input to output.</p>
+</div>
+<p>The design and implementation of <em>deface</em> adhere to three principles:</p>
+<ol class="arabic simple">
+<li><p>Preserve independent semantic concepts as records. Also preserve all key,
+value pairs within those records. Critically, the immediate key of a
+semantically relevant value does not change.</p></li>
+<li><p>Simplify the data: Eliminate unnecessary structure as well as obviously
+redundant values. The latter may involve reconciling fields with different
+names in different records.</p></li>
+<li><p>Strictly validate all inputs and fail immediately when data diverges from
+expectation. The presence of unknown or unexpected fields must trigger a
+validation failure.</p></li>
+</ol>
+<p>The preservation principle applies to the leaves of the JSON graph, that is,
+keys with scalar values including text, and to interior nodes that are
+meaningful in the domain of social media posts, e.g., not only posts themselves
+but also media, events, or locations. At the same time, they do not include
+artifacts of Facebook’s fairly elaborate JSON encoding. For example, a post’s
+<code class="docutils literal notranslate"><span class="pre">attachments</span></code> and <code class="docutils literal notranslate"><span class="pre">data</span></code> keys, if present, have lists of singleton objects
+as values. Each nested singleton object is a key, value pair representing a
+property of the post, with some keys appearing in multiple singleton objects to
+specify multiple values.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">"timestamp"</span><span class="p">:</span> <span class="mi">946684799</span><span class="p">,</span>
+  <span class="nt">"data"</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">"post"</span><span class="p">:</span> <span class="s2">"Let's party like it's 1999!"</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="nt">"update_timestamp"</span><span class="p">:</span> <span class="mi">946684800</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The obvious and more concise alternative is to add all keys to the post object
+itself and to use lists of values where the more elaborate encoding repeats a
+key.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">"timestamp"</span><span class="p">:</span> <span class="mi">946684799</span><span class="p">,</span>
+  <span class="nt">"post"</span><span class="p">:</span> <span class="s2">"Let's party like it's 1999!"</span><span class="p">,</span>
+  <span class="nt">"update_timestamp"</span><span class="p">:</span> <span class="mi">946684800</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The simplification principle also applies to the <code class="docutils literal notranslate"><span class="pre">attachments</span></code> and <code class="docutils literal notranslate"><span class="pre">data</span></code>
+introduced above because they aren’t meaningful in the domain of social media
+posts. A more subtle application of the simplification principle are places in
+the original Facebook post data: Such locations are included amongst a post’s
+attachments and their <code class="docutils literal notranslate"><span class="pre">coordinate</span></code> attributes are nested objects with the
+<code class="docutils literal notranslate"><span class="pre">latitude</span></code> and <code class="docutils literal notranslate"><span class="pre">longitude</span></code>. Since coordinates and locations are related
+rather than independent concepts, the simplification principle does apply. The
+corresponding transform removes the nested object after hoisting its contents
+into the outer object.</p>
+<p>In addition to the encoding being already rather elaborate, Facebook’s post data
+contains a surprising amount of duplicated data. For example:</p>
+<ul class="simple">
+<li><p>Posts containing several photos and/or videos may be represented as that many
+post objects with identical <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> and <code class="docutils literal notranslate"><span class="pre">post</span></code> body but different
+media objects describing those photos and/or videos.</p></li>
+<li><p>All of a post’s media objects may have the same <code class="docutils literal notranslate"><span class="pre">description</span></code>, which may
+also be the same as the <code class="docutils literal notranslate"><span class="pre">post</span></code> body.</p></li>
+<li><p>Very few posts have more than one place. If they do, they usually have two
+locations that differ only in <code class="docutils literal notranslate"><span class="pre">url</span></code>, with one location object having
+<code class="docutils literal notranslate"><span class="pre">None</span></code> and the other having a string value.</p></li>
+</ul>
+<p>In all these cases, the simplification principle applies, but the implementation
+must take care to preserve all information. For example, when combining media
+objects, that means distinguishing them by <code class="docutils literal notranslate"><span class="pre">uri</span></code>, the path to the actual photo
+or video, while also ensuring that the other attributes don’t gratuitously
+diverge. When hoisting descriptions from media objects to posts, that means
+ensuring that all of a post’s media have the same description. And when removing
+redundant locations, that means not dropping the one with the URL.</p>
+<p>The validation principle goes beyond the preservation principle by requiring
+human intervention when data deviates from the expected schema. More permissive
+designs such as <a class="reference external" href="https://developers.google.com/protocol-buffers">protocol buffers</a> are certainly feasible but
+critically depend on common rules for compatible schema evolution. That’s not
+feasible for this use case and hence the only reasonable option is to disallow
+automatic schema evolution. Since posts are independent top-level entities, that
+doesn’t mean to terminate post processing upon first failure. We can still
+process the remaining posts, one at a time. The validation principle would
+suggest not saving such a partial result. But pragmatic concerns point towards
+users having that option. After all, having some posts seems better than having
+none posts.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>More detailed notes on the different entities potentially belonging to a post
+as well as on individual attributes are included in the API documentation for
+<a class="reference internal" href="deface.html#module-deface.model" title="deface.model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">deface.model</span></code></a>, which defines <em>deface</em>’s schema.</p>
+</div>
+</section>
+
+      </article>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="changelog.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Changelog</div>
+              </div>
+              <svg><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="motivation.html">
+              <svg><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Motivation</div>
+                
+              </div>
+            </a>
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; 2021, Robert Grimm
+            |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+            |
+            <a class="muted-link" href="_sources/design.rst.txt"
+               rel="nofollow">
+              Show Source
+            </a>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/scripts/main.js"></script>
+    </body>
+</html>
