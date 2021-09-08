@@ -20,6 +20,8 @@ from collections.abc import Iterator, KeysView
 from typing import Any, cast, Generic, NoReturn, Optional, TypeVar, Union
 from deface.error import ValidationError
 
+__all__ = ['KeyT', 'T', 'Validator']
+
 KeyT = Union[int, str]
 T = TypeVar('T')
 
@@ -96,30 +98,49 @@ class Validator(Generic[T]):
     Raise a validation error for the current value. The error message is
     automatically formatted as the character sequence consisting of filename,
     keypath, a space, and the given message string.
+
+    :raises ValidationError: indicates a malformed JSON object.
     """
     keypath = self.keypath
     raise ValidationError(f'{self._filename}{keypath} {message}')
 
   def to_integer(self) -> Validator[int]:
-    """Coerce the current value to an integer."""
+    """
+    Coerce the current value to an integer.
+
+    :raises ValidationError: indicates that the current value is not an integer.
+    """
     if not isinstance(self._value, int):
       self.raise_invalid('is not an integer')
     return cast(Validator[int], self)
 
-  def to_number(self) -> Validator[float]:
-    """Coerce the current value to an integral or floating point number."""
+  def to_float(self) -> Validator[float]:
+    """
+    Coerce the current value to an integral or floating point number.
+
+    :raises ValidationError: indicates that the current value is neither an
+      integer nor a floating point number.
+    """
     if not isinstance(self._value, (int, float)):
-      self.raise_invalid('is not an integer nor a float')
+      self.raise_invalid('is neither integer nor float')
     return cast(Validator[float], self)
 
   def to_string(self) -> Validator[str]:
-    """Coerce the current value to a string."""
+    """
+    Coerce the current value to a string.
+
+    :raises ValidationError: indicates that the current value is not a string.
+    """
     if not isinstance(self._value, str):
       self.raise_invalid('is not a string')
     return cast(Validator[str], self)
 
   def to_list(self) -> Validator[list[Any]]:
-    """Coerce the current value to a list."""
+    """
+    Coerce the current value to a list.
+
+    :raises ValidationError: indicates that the current value is not a list.
+    """
     if not isinstance(self._value, list):
       self.raise_invalid('is not a list')
     return cast(Validator[list[Any]], self)
@@ -144,6 +165,9 @@ class Validator(Generic[T]):
     Coerce the current value to an object. If ``valid_keys`` are given, this
     method validates the object's fields against the given field names. If
     ``singleton`` is ``True``, the object must have exactly one field.
+
+    :raises ValidationError: indicates that the current value is not an object,
+      not an object with a single key, or has a field with unknown name.
     """
     if not isinstance(self._value, dict):
       self.raise_invalid('is not an object')
@@ -163,13 +187,14 @@ class Validator(Generic[T]):
     operation becomes the new validator's value. The new validator's parent is
     this validator.
 
-    If the current value is a list, the key must be a positive, in-bounds
-    integer. This method raises a ``TypeError`` for non-integer keys and an
-    ``IndexError`` for out-of-bounds integer keys. If the current value is an
-    object, the key must be a string naming an existing field. This method
-    raises a ``TypeError`` for non-string keys and a ``KeyError`` for keys
-    naming non-existent fields. This method also raises a ``TypeError`` if the
-    current value is neither a list nor an object.
+    :raises TypeError: indicates that the current value is neither list nor
+      object, that the key is not an integer even though the current value is a
+      list, or that the key is not a string even though the current value is an
+      object.
+    :raises IndexError: indicates that the integer key is out of bounds for the
+      current list value.
+    :raises ValidationError: indicates that the required field named by the
+      given key for the current object value is missing.
     """
     value = self._value
     if isinstance(value, list):
@@ -186,7 +211,7 @@ class Validator(Generic[T]):
       if not isinstance(key, str):
         raise TypeError(f'Non-string key "{key}" cannot index dict')
       elif key not in value:
-        raise KeyError(f'Value "{value}" does not have field "{key}"')
+        self.raise_invalid(f'is missing required field {key}')
       else:
         return Validator[Any](value[key], key=key, parent=self)
     else:
