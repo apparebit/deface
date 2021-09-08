@@ -16,7 +16,7 @@ import pytest
 
 from typing import Any
 
-from deface.error import ValidationError
+from deface.error import DefaceError
 from deface.model import ExternalContext, Location, MediaMetaData, MediaType
 from deface.ingest import ingest_post
 from deface.validator import Validator
@@ -179,8 +179,145 @@ def test_ingest_post():
   assert post.title == "Photo and Video"
   assert post.update_timestamp == None
 
-def test_fail_validation():
-  with pytest.raises(ValidationError) as exception_info: # type: ignore
-    ingest_post(Validator[Any]({ 'timestamp': '665' }, filename='malformed1'))
-  msg: str = exception_info.value.args[0] # type: ignore
-  assert msg == 'malformed1.timestamp is not an integer'
+TEST_CASES = [
+  (42, 'malformed is not an object'),
+  ({ 'answer': 42 }, 'malformed contains unexpected field answer'),
+  ({ 'timestamp': '665' }, 'malformed.timestamp is not an integer'),
+
+  # attachments
+  ({ 'attachments': { 'data': [] }}, 'malformed.attachments is not a list'),
+  ({ 'attachments': [{ 'data': 42 }]},
+  'malformed.attachments[0].data is not a list'),
+
+  # event attachment
+  ({ 'attachments': [{ 'data': [{ 'event': 42 }]}]},
+  'malformed.attachments[0].data[0].event is not an object'),
+  ({ 'attachments': [{ 'data': [{ 'event': { 'name': 42 } }]}]},
+  'malformed.attachments[0].data[0].event.name is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'event':
+    { 'name': 'test', 'start_timestamp': '665' } }]}]},
+  'malformed.attachments[0].data[0].event.start_timestamp is not an integer'),
+  ({ 'attachments': [{ 'data': [{ 'event':
+    { 'name': 'test', 'start_timestamp': 665, 'end_timestamp': '0' } }]}]},
+  'malformed.attachments[0].data[0].event.end_timestamp is not an integer'),
+  ({ 'attachments': [{ 'data': [{ 'event':
+    { 'name': 'test', 'start_timestamp': 665, 'end_timestamp': 0 } }]}]},
+  lambda p: (
+      p.event.name == 'test'
+      and p.event.start_timestamp == 665
+      and p.event.end_timestamp == 0
+  )),
+
+  # external_context attachment
+  ({ 'attachments': [{ 'data': [{ 'external_context': 665 }]}]},
+  'malformed.attachments[0].data[0].external_context is not an object'),
+  ({ 'attachments': [{ 'data': [{ 'external_context': { 'url': 0 }}]}]},
+  'malformed.attachments[0].data[0].external_context.url is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'external_context':
+    { 'url': 'https://apparebit.com' }}]}]},
+  lambda p: p.external_context.url == 'https://apparebit.com'),
+  ({ 'attachments': [{ 'data': [{ 'external_context':
+    { 'url': 'https://apparebit.com', 'source': 13 }}]}]},
+  'malformed.attachments[0].data[0].external_context.source is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'external_context':
+    { 'url': 'https://apparebit.com', 'source': 'Apparebit' }}]}]},
+  lambda p: p.external_context.source == 'Apparebit'),
+  ({ 'attachments': [{ 'data': [{ 'external_context':
+    { 'url': 'https://apparebit.com', 'name': 13 }}]}]},
+  'malformed.attachments[0].data[0].external_context.name is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'external_context':
+    { 'url': 'https://apparebit.com', 'name': 'Apparebit' }}]}]},
+  lambda p: p.external_context.name == 'Apparebit'),
+
+  # media attachment
+
+  # name attachment
+  ({ 'attachments': [{ 'data': [{ 'name': 665 }]}]},
+  'malformed.attachments[0].data[0].name is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'name': 'Rob' }]}]},
+  lambda p: p.name == 'Rob'),
+
+  # place attachment
+  ({ 'attachments': [{ 'data': [{ 'place': 665 }]}]},
+  'malformed.attachments[0].data[0].place is not an object'),
+  ({ 'attachments': [{ 'data': [{ 'place': { 'name': 13 } }]}]},
+  'malformed.attachments[0].data[0].place.name is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'place': { 'name': 'somewhere' } }]}]},
+  lambda p: p.places[0].name == 'somewhere'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'address': 42 } }]}]},
+  'malformed.attachments[0].data[0].place.address is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'address': 'an avenue' } }]}]},
+  lambda p: p.places[0].address == 'an avenue'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'coordinate': 42 } }]}]},
+  'malformed.attachments[0].data[0].place.coordinate is not an object'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'coordinate': { 'latitude': 'long' }}}]}]},
+  'malformed.attachments[0].data[0].place.coordinate.latitude '
+  'is neither integer nor float'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'coordinate': { 'latitude': 1.5, 'longitude': 'lat' }}}]}]},
+  'malformed.attachments[0].data[0].place.coordinate.longitude '
+  'is neither integer nor float'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'coordinate': { }}}]}]},
+  'malformed.attachments[0].data[0].place.coordinate '
+  'is missing required field latitude'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'coordinate': { 'value': 665 }}}]}]},
+  'malformed.attachments[0].data[0].place.coordinate '
+  'contains unexpected field value'),
+  ({ 'attachments': [{ 'data': [{ 'place': {
+    'name': 'somewhere', 'coordinate': { 'latitude': 1.5, 'longitude': 3.2 }}}]}]},
+  lambda p: p.places[0].latitude == 1.5 and p.places[0].longitude == 3.2),
+
+  # text attachment
+  ({ 'attachments': [{ 'data': [{ 'text': 42 }]}]},
+  'malformed.attachments[0].data[0].text is not a string'),
+  ({ 'attachments': [{ 'data': [{ 'text': 'textual' }]}]},
+  lambda p: p.text[0] == 'textual'),
+  ({ 'attachments': [{ 'data': [{ 'text': 'textual' }, { 'text': 'texture' }]}]},
+  lambda p: p.text[1] == 'texture'),
+
+  # data
+  ({ 'data': 42 }, 'malformed.data is not a list'),
+
+  # backdated_timestamp data
+  ({ 'data': [{ 'backdated_timestamp': 'tik' }]},
+  'malformed.data[0].backdated_timestamp is not an integer'),
+  ({ 'data': [{ 'backdated_timestamp': 665 }]},
+  lambda p: p.backdated_timestamp == 665),
+
+  # post data
+  ({ 'data': [{ 'post': 13 }]}, 'malformed.data[0].post is not a string'),
+  ({ 'data': [{ 'post': 'body' }]}, lambda p: p.post == 'body'),
+
+  # update_timestamp data
+  ({ 'data': [{ 'update_timestamp': 'tok' }]},
+  'malformed.data[0].update_timestamp is not an integer'),
+  ({ 'data': [{ 'update_timestamp': 42 }]},
+  lambda p: p.update_timestamp == 42),
+
+  # tags
+  ({ 'tags': 42 }, 'malformed.tags is not a list'),
+  ({ 'tags': [42] }, 'malformed.tags[0] is not a string'),
+  ({ 'tags': ['#tag'] }, lambda p: p.tags[0] == '#tag'),
+
+  # title
+  ({ 'timestamp': 1, 'title': 42 }, 'malformed.title is not a string'),
+  ({ 'title': 'The Title' }, lambda p: p.title == 'The Title'),
+]
+
+def test_validation():
+  for structured_data, validation in TEST_CASES:
+    if isinstance(validation, str):
+      with pytest.raises(DefaceError) as exception_info:
+        ingest_post(Validator[Any](structured_data, filename='malformed'))
+      actual_message = exception_info.value.args[0]
+      assert actual_message == validation
+    else:
+      structured_data['timestamp'] = 665
+      post = ingest_post(Validator[Any](structured_data, filename='wellformed'))
+      assert validation(post)
