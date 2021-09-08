@@ -21,6 +21,20 @@ from typing import Optional, Union
 from deface.error import MergeError
 
 
+__all__ = [
+  'MediaType',
+  'Comment',
+  'Event',
+  'ExternalContext',
+  'Location',
+  'MediaMetaData',
+  'Media',
+  'Post',
+  'PostHistory',
+  'find_simultaneous_posts'
+]
+
+
 class MediaType(enum.Enum):
   """
   An enumeration of media types.
@@ -127,8 +141,10 @@ class Location:
        ]
      }
 
-  The ``coordinates`` are stripped during ingestion to hoist ``latitude`` and
-  ``longitude`` into the location record.
+  The ``coordinate`` is stripped during ingestion to hoist ``latitude`` and
+  ``longitude`` into the location record. In rare cases, the ``coordinate`` may
+  be missing from the original Facebook data, hence both the ``latitude`` and
+  ``longitude`` attributes are optional.
   """
   name: str
   address: Optional[str] = None
@@ -136,13 +152,13 @@ class Location:
   latitude: Optional[float] = None
   """
   The latitude. In the original Facebook post data, this attribute is nested
-  inside the ``coordinates`` attribute.
+  inside the ``coordinate`` attribute.
   """
 
   longitude: Optional[float] = None
   """
   The longitude. In the original Facebook data, this attribute is nested inside
-  the ``coordinates`` attribute.
+  the ``coordinate`` attribute.
   """
 
   url: Optional[str] = None
@@ -201,9 +217,13 @@ class MediaMetaData:
   focal_length: Optional[str] = None
   f_stop: Optional[str] = None
   iso_speed: Optional[int] = None
+  latitude: Optional[float] = None
+  longitude: Optional[float] = None
+  modified_timestamp: Optional[int] = None
   orientation: Optional[int] = None
   original_height: Optional[int] = None
   original_width: Optional[int] = None
+  taken_timestamp: Optional[int] = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -294,8 +314,8 @@ class Post:
 
   timestamp: int
   """
-  The time a post was made in seconds since the beginning of the Unix epoch
-  (January 1, 1970 at midnight).
+  The time a post was made in seconds since the beginning of the Unix epoch on
+  January 1, 1970 at midnight.
   """
 
   backdated_timestamp: Optional[int] = None
@@ -406,11 +426,10 @@ class PostHistory:
 
   def add(self, post: Post) -> None:
     """
-    Add the post to the history of posts.
-
-    :raises MergeError: indicates that at least one other post with the same
-      timestamp already exists in the history and that the two posts could not
-      be merged.
+    Add the post to the history of posts. If the history already includes one or
+    more posts with the same timestamp, this method tries merging the given post
+    with each of those posts and replaces the post upon a successful merge.
+    Otherwise, this method adds the post to the history.
     """
     timestamp = post.timestamp
     if timestamp not in self._posts:
@@ -459,13 +478,16 @@ def find_simultaneous_posts(timeline: list[Post]) -> list[range]:
   index = 0
   length = len(timeline)
   while index < length:
+    # Start with current index.
     start = index
     post = timeline[index]
-
+    # Scan for subsequent simultaneous posts.
     while index + 1 < length and post.is_simultaneous(timeline[index + 1]):
       index += 1
-
+    # Jot down the range if there were simultaneous posts.
     if start != index:
       simultaneous_posts.append(range(start, index + 1))
+    # Make sure next iteration looks at subsequent post.
+    index += 1
 
   return simultaneous_posts
