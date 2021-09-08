@@ -12,8 +12,8 @@ Facebook engineers moved fast, broke things, and couldn't be bothered to fix the
 mess they created. In this case, the mess involves unicode escape sequences of
 the form ``\u00xx`` that encode what really should be raw UTF-8 bytes. They are
 the result of Facebook using two encoding steps where one would be just right.
-That turns ``don’t`` into ``don\u00e2\u0080\u0099t`` in an exported file and,
-When parsed as plain JSON, into unreadable ``donât``.
+That turns ``don’t`` into ``don\u00e2\u0080\u0099t`` inside Facebook's JSON
+files and, after parsing the JSON, into a nonsensical ``donât``.
 
 Originally, I relied on `Robyn Speer's ftfy
 <https://github.com/rspeer/python-ftfy>`_. But then one weekend I got curious

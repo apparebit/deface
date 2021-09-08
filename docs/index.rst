@@ -33,6 +33,7 @@ that case in `an invited talk <https://youtu.be/iYJQSfQGDEE>`_ at `Rebase
 
    motivation
    design
+   changelog
 
 .. toctree::
    :caption: Usage:
@@ -48,3 +49,4 @@ that case in `an invited talk <https://youtu.be/iYJQSfQGDEE>`_ at `Rebase
 
    Source Code <https://github.com/apparebit/deface>
    Issue Tracker <https://github.com/apparebit/deface/issues>
+   Package <https://pypi.org/project/deface-social/>
