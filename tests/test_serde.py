@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from deface.json_io import dumps, loads, restore_utf8
+from deface.serde import dumps, loads, restore_utf8
 
 def test_restore_from_mojibake():
   text = restore_utf8(
@@ -27,6 +27,10 @@ def test_loads_dumps():
 
   assert isinstance(json, dict)
   assert json['answer'] == 42
+
+  json['some_noise'] = None
+  json['noise'] = []
+  json['more_noise'] = ()
 
   text = dumps(json)
 

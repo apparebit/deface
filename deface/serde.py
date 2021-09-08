@@ -20,6 +20,14 @@ import re
 from binascii import unhexlify
 from typing import Any, Union
 
+__all__ = [
+  'JsonT',
+  'restore_utf8',
+  'loads',
+  'prepare',
+  'dumps'
+]
+
 JsonT = Union[None, bool, int, float, str, list[Any], dict[str, Any]]
 
 _BROKEN_ESCAPE = re.compile(rb'\\u00([0-9a-f][0-9a-f])', re.I)
@@ -28,12 +36,10 @@ def restore_utf8(data: bytes) -> bytes:
   """
   Restore the UTF-8 encoding for files exported from Facebook. Such files may
   appear to be valid JSON at first but nonetheless encode all non-ASCII
-  characters incorrectly. That is the result of Facebook first generating JSON
-  text in UTF-8 with only double-quotes and newlines escaped (as ``\\"`` and
-  ``\\n``, respectively) and thereafter encoding all bytes that aren't also
-  valid ASCII as faux unicode escapes of the form ``\\u00xx``. This function
-  undoes that second faulty encoding step. Its result can safely be parsed as
-  UTF-8-encoded JSON text.
+  characters incorrectly. Notably, what should just be UTF-8 byte values are
+  Unicode escape sequences of the form ``\\u00xx``. This function undoes the
+  damage. It should be invoked on the bytes of the raw JSON text, before
+  parsing.
   """
   return re.sub(_BROKEN_ESCAPE, lambda match: unhexlify(match.group(1)), data)
 
@@ -46,34 +52,42 @@ def loads(data: bytes, **kwargs: Any) -> JsonT:
   """
   return json.loads(restore_utf8(data), **kwargs)
 
-def default(value: Any) -> Union[str, dict[str, Any]]:
-  """
-  Convert the given value, which cannot be encoded as JSON, to an equivalent
-  value that can be encoded as JSON. For enum constants, this function returns
-  their names. For dataclasses, it returns a dictionary with their non-``None``
-  attributes. Similarly for objects with a ``__dict__`` attribute, it returns a
-  dictionary with their non-``None`` attributes.
+_EMPTY_LIST: list[Any] = []
+_EMPTY_TUPLE: tuple[Any, ...] = ()
 
-  :raises TypeError: indicates that the value does not match any of the above
-    cases.
-  """
-  if isinstance(value, enum.Enum):
-    return value.name
+def _is_void(value: Any) -> bool:
+  return value is None or value == _EMPTY_LIST or value == _EMPTY_TUPLE
 
-  dct: dict[str, Any]
-  if dataclasses.is_dataclass(value):
-    dct = dataclasses.asdict(value)
-  elif hasattr(value, '__dict__'):
-    dct = value.__dict__
+def prepare(data: Any) -> Any:
+  """
+  Prepare the given value for serialization to JSON. This function recursively
+  replaces enumeration constants with their names, list and tuples with
+  equivalent lists, and dataclasses and dictionaries with equivalent
+  dictionaries. While generating equivalent dictionaries, it also filters out
+  entries that are ``None``, the empty list ``[]``, or the empty tuple ``()``.
+  All other values remain unchanged.
+  """
+  if dataclasses.is_dataclass(data):
+    result = {}
+    for field in dataclasses.fields(data):
+      value = getattr(data, field.name)
+      if not _is_void(value):
+        result[field.name] = prepare(value)
+    return result
+  elif isinstance(data, dict):
+    return { k: prepare(v) for k, v in data.items() if not _is_void(v) }
+  elif isinstance(data, (list, tuple)):
+    return [prepare(v) for v in data]
+  elif isinstance(data, enum.Enum):
+    return data.name
   else:
-    raise TypeError(f'Value "{value}" cannot be encoded as JSON')
-  return { k: v for k, v in dct.items() if v is not None }
+    return data
 
-def dumps(value: Any, **kwargs: Any) -> str:
+def dumps(data: Any, **kwargs: Any) -> str:
   """
   Return the result of serializing the given value as JSON text. This function
   simply wraps an invocation of the eponymous function in Python's ``json``
-  package. It uses :py:func:`default` as the ``default`` argument while passing
-  any other keyword arguments through.
+  package — after applying :py:func:`prepare` to the given ``data``. It passes
+  the keyword arguments through.
   """
-  return json.dumps(value, default=default, **kwargs)
+  return json.dumps(prepare(data), **kwargs)

@@ -25,14 +25,6 @@ deface.ingest
    :undoc-members:
    :show-inheritance:
 
-deface.json_io
---------------
-
-.. automodule:: deface.json_io
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 deface.logger
 -------------
 
@@ -49,10 +41,19 @@ deface.model
    :undoc-members:
    :show-inheritance:
 
+deface.serde
+------------
+
+.. automodule:: deface.serde
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 deface.validator
 ----------------
 
 .. automodule:: deface.validator
    :members:
    :undoc-members:
+   :special-members:  __getitem__
    :show-inheritance:
