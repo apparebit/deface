@@ -2,6 +2,6 @@
 .mypy_cache
 .pytest_cache
 .python-version
-node_modules
 __pycache__
+dist
 docs/_build
