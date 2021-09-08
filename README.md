@@ -11,7 +11,7 @@ in November 2020.
 To install *deface*:
 
 ```shell
-$ pip install ???
+$ pip install deface-social
 ```
 
 To run *deface*:

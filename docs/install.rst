@@ -8,7 +8,7 @@ To install *deface* into your current Python environment, simply execute:
 
 .. code-block:: shell
 
-   $ pip install ???
+   $ pip install deface-social
 
 That makes the ``deface`` command available in your shell. Try running it:
 
