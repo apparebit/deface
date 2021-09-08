@@ -15,9 +15,11 @@
 import enum
 import sys
 
-from deface import json_io
+from deface import serde
 from types import MethodType
 from typing import Any, TextIO, Union
+
+__all__ = ['pluralize', 'Level', 'Logger']
 
 def pluralize(count: int, noun: str, suffix: str = 's') -> str:
   return noun + suffix if count != 1 else noun
@@ -26,9 +28,9 @@ def _sgr(_: str, code: str) -> str:
   return f'\x1b[{code}m'
 
 class Level(enum.Enum):
-  ERROR = '❌ '
+  ERROR = '🛑 '
   WARN = '⚠️ '
-  INFO = ''
+  INFO = 'ℹ️ '
 
 class Logger:
   """
@@ -43,13 +45,14 @@ class Logger:
     self,
     stream: TextIO = sys.stderr,
     prefix: str = '',
-    use_emoji: bool = True
+    use_emoji: bool = True,
+    use_color: bool = True,
   ):
     self._line_count: int = 0
     self._error_count: int = 0
     self._warn_count: int = 0
     self._stream: TextIO = stream
-    if stream.isatty():
+    if stream.isatty() and use_color:
       self._sgr = MethodType(_sgr, self) # type: ignore
     self._prefix: str = prefix
     self._use_emoji: bool = use_emoji
@@ -62,7 +65,7 @@ class Logger:
 
   def print_json(self, value: Any, **kwargs: Any) -> None:
     """Log a nicely indented JSON representation of the given value"""
-    self.print(json_io.dumps(value, indent=2, **kwargs))
+    self.print(serde.dumps(value, indent=2, **kwargs))
 
   def _sgr(self, _: str) -> str:
     return ''
@@ -118,6 +121,10 @@ class Logger:
     """
     self._warn_count += 1
     self._print_entry(Level.WARN, warning, *extras)
+
+  def info(self, message: str, *extras: Any) -> None:
+    """Print an informational message."""
+    self._print_entry(Level.INFO, message, *extras)
 
   def done(self, message: str) -> None:
     """
