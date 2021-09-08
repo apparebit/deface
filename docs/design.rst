@@ -59,11 +59,11 @@ The simplification principle also applies to the ``attachments`` and ``data``
 introduced above because they aren't meaningful in the domain of social media
 posts. A more subtle application of the simplification principle are places in
 the original Facebook post data: Such locations are included amongst a post's
-attachments and their ``coordinates`` are nested objects with the ``latitude``
-and ``longitude``. Since coordinates and locations are related rather than
-independent concepts, the simplification principle does apply. The corresponding
-transform removes the nested object after hoisting its contents into the outer
-object.
+attachments and their ``coordinate`` attributes are nested objects with the
+``latitude`` and ``longitude``. Since coordinates and locations are related
+rather than independent concepts, the simplification principle does apply. The
+corresponding transform removes the nested object after hoisting its contents
+into the outer object.
 
 In addition to the encoding being already rather elaborate, Facebook's post data
 contains a surprising amount of duplicated data. For example:
