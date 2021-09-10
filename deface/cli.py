@@ -79,7 +79,10 @@ def main() -> None:
   eliminates redundant information, reconciles the records into a single
   timeline, and then exports that timeline of posts as JSON.
   """
-  args = create_parser().parse_args()
+  parser = create_parser()
+  args = parser.parse_args()
+  if sys.version_info < (3, 9,):
+    parser.exit(status=2, message='deface requires Python 3.9 or later')
 
   # Make errors and warnings appear in line-terminated comments. While they are
   # printed to standard error instead of standard output, that nonetheless helps
