@@ -208,7 +208,7 @@ class MediaMetaData:
   photo or video itself, they are hoisted into the :py:class:`Media` record. The
   remaining attributes, even if present in the original Facebook post data, tend
   to be meaningless, i.e., are either the empty string or zero. Also, while the
-  remaining attributes would be meaningful for both photos and videos, the are
+  remaining attributes would be meaningful for both photos and videos, they are
   found only on photos.
   """
   camera_make: Optional[str] = None
@@ -239,14 +239,6 @@ class Media:
   data.
   """
 
-  uri: str
-  """
-  The absolute path to the photo or video within the personal data archive. In
-  terms of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`, the
-  attribute provides a *relative reference*, i.e., it lacks a scheme such as
-  ``file:``.
-  """
-
   upload_ip: str
   """
   The IP address from which the photo or video was uploaded from. In the
@@ -256,6 +248,16 @@ class Media:
   object. However, since ``upload_ip`` really is part of Facebook's data on the
   use of the photo or video, it is hoisted into the media record during
   ingestion.
+  """
+
+  uri: str
+  """
+  The path to the photo or video file within the personal data archive. In terms
+  of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`, the attribute
+  provides a *relative-path reference*, i.e., it lacks a scheme such as
+  ``file:`` and does not start with a slash ``/``. However, it should not be
+  resolved relative to the file containing the field but rather from the root of
+  the personal data archive.
   """
 
   creation_timestamp: Optional[int] = None
@@ -273,6 +275,13 @@ class Media:
   """The metadata for the photo or video."""
 
   thumbnail: Optional[str] = None
+  """
+  The thumbnail for a photo or video. If present in the original Facebook data,
+  the value is an object with ``uri`` as its only field. Just like
+  :py:attr:`Media.uri`, the thumbnail URI is a *relative-path reference* that
+  should be resolved from the root of the personal data archive.
+  """
+
   title: Optional[str] = None
 
   upload_timestamp: Optional[int] = None
