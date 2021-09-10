@@ -12,6 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+The data model for posts. This module defines the *deface*'s improved post
+schema, starting with the :py:class:`Post` dataclass and including all nested
+dependencies :py:class:`Comment`, :py:class:`Event`,
+:py:class:`ExternalContext`, :py:class:`Location`, :py:class:`Media`,
+:py:class:`MediaMetaData`, and :py:class:`MediaType`. It also defines the
+:py:class:`PostHistory` and :py:func:`find_simultaneous_posts` helpers for
+building up a coherent timeline.
+
+The schema uses Python tuples instead of lists because the former are immutable
+and thus do not get in the way of all model classes being both equatable and
+hashable.
+
+The model's JSON serialization follows directly from its definition, with every
+dataclass instance becoming an object in the JSON text that has the same fields
+— with one important exception: If an attribute has ``None`` or the empty tuple
+``()`` as its value, then it is omitted from serialization. With the schema
+containing far more optional than required attributes, this seems like a
+necessary restriction to ensure that generated JSON remains free of distracting
+noise.
+
+Currently, there is no support for reading in generated JSON again; adding that
+feature has high priority.
+"""
+
 from __future__ import annotations
 
 import dataclasses
