@@ -32,7 +32,12 @@ name = "deface"
 deface = "deface.cli:main"
 
 [project.optional-dependencies]
-test = ["mypy", "pytest"]
+test = [
+  "mypy",
+  "pytest",
+  "pytest-cov"
+]
+
 doc = [
   "furo",
   "sphinx",
