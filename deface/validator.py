@@ -184,17 +184,16 @@ class Validator(Generic[T]):
     """
     Index the current value with the given key to create a new child validator.
     The given key becomes the new validator's key and the result of the indexing
-    operation becomes the new validator's value. The new validator's parent is
-    this validator.
+    operation becomes the new validator's value. This validator becomes the new
+    validator's parent.
 
     :raises TypeError: indicates that the current value is neither list nor
       object, that the key is not an integer even though the current value is a
       list, or that the key is not a string even though the current value is an
-      object.
-    :raises IndexError: indicates that the integer key is out of bounds for the
-      current list value.
-    :raises ValidationError: indicates that the required field named by the
-      given key for the current object value is missing.
+      object. :raises IndexError: indicates that the integer key is out of
+      bounds for the current list value. :raises ValidationError: indicates that
+      the required field named by the given key for the current object value is
+      missing.
     """
     value = self._value
     if isinstance(value, list):

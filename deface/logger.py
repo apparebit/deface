@@ -34,19 +34,21 @@ class Level(enum.Enum):
 
 class Logger:
   """
-  A simple console logger. By default, the logger prefixes messages with
-  appropriate emoji. If the underlying ``stream`` is a TTY, it also uses ANSI
-  escape codes to style messages.
+  A simple console logger. By default, the logger prefixes messages with the
+  given ``prefix`` followed by appropriate emoji. If the underlying ``stream``
+  is a TTY, it also uses ANSI escape codes to style messages.
 
   :param stream: The stream to write to, which defaults to standard error.
+  :param prefix: The prefix for messages written to the stream.
+  :param use_color: The flag for using color, which defaults to ``True``.
   :param use_emoji: The flag for using emoji, which defaults to ``True``.
   """
   def __init__(
     self,
     stream: TextIO = sys.stderr,
     prefix: str = '',
-    use_emoji: bool = True,
     use_color: bool = True,
+    use_emoji: bool = True,
   ):
     self._line_count: int = 0
     self._error_count: int = 0
