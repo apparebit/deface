@@ -16,7 +16,6 @@ classifiers = [
   "Topic :: Text Processing",
   "Topic :: Utilities"
 ]
-urls = { Source = "https://github.com/apparebit/deface" }
 
 # Build tool extracts description and version from package, reusing the value
 # of top-level docstring and the __version__ variable.
@@ -45,8 +44,13 @@ doc = [
   "sphinxext-opengraph"
 ]
 
+[project.urls]
+Source = "https://github.com/apparebit/deface"
+Documentation = "https://apparebit.github.io/deface/"
+Changelog = "https://apparebit.github.io/deface/changelog.html"
+
 [tool.mypy]
-files = ["deface/**/*.py"]
+files = ["run.py", "deface/**/*.py"]
 disallow_any_unimported = true
 disallow_any_decorated = true
 disallow_subclassing_any = true
