@@ -21,10 +21,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
-import tempfile
 from typing import Any, Callable, Union
 
-# This is not a module!
+# Don't even think of importing run!
 __all__: list[str] = []
 
 # ------------------------------------------------------------------------------
@@ -34,24 +33,21 @@ is_tracing: bool = False
 sgr: Callable[[str], str] = lambda c: f'\x1b[{c}m'
 log_prefix: str = f'{sys.argv[0]} >> '
 
+def println(on: str, message: str, off: str) -> None:
+  sys.stderr.write(sgr(on) + log_prefix + message + sgr(off) + '\n')
+
 def trace(message: str, *args: Any, **kwargs: Any) -> None:
   """Write the formatted message to standard error in verbose mode."""
   if is_tracing:
-    sys.stderr.write(
-      sgr('1')
-      + log_prefix + message.format(*args, **kwargs)
-      + sgr('0')
-      + '\n'
-    )
+    println('1', message.format(*args, **kwargs), '0')
 
 def announce(message: str) -> None:
   """Write the message to standard error."""
-  sys.stderr.write(
-    sgr('1;97;45')
-    + log_prefix + message
-    + sgr('0;39;49')
-    + '\n'
-  )
+  println('1;97;45', message, '0;39;49')
+
+def warn(message: str) -> None:
+  """Write the message to standard error."""
+  println('1;103', message, '0;49')
 
 # ------------------------------------------------------------------------------
 # Utilities: Program Execution
@@ -129,21 +125,35 @@ def open_file(*pathsegments: PathType) -> None:
 # ------------------------------------------------------------------------------
 # Bootstrap
 
+def virtualize() -> None:
+  if not (env.venv / 'bin' / 'activate').exists():
+    # Create new virtual environment:
+    # exec([sys.executable or 'python3', '-m', env.venv])
+    pass
+  # Activate virtual environment:
+  # ./bin/activate && ./run.py init
+  warn('Remember to activate virtual environment:')
+  warn('$ source bin/activate')
+
 def bootstrap() -> None:
   """WIP: DO NOT USE"""
-  # If not running inside virtual environment...
+  # If we are not running inside a virtual environment
   if sys.prefix == sys.base_prefix:
-    # TODO Check for existing venv
-    # Create new virtual environment.
-    exec([sys.executable or 'python', '-m', env.venv])
-    # TODO Activate virtual environment
+    virtualize()
+    return
 
+  # Ensure pip is installed and not too old.
+  exec([sys.executable or 'python', '-m', 'ensurepip', '--upgrade'])
+
+  # We need a TOML parser to get dependencies, but Python's standard library
+  # does not have one. Thankfully, we just made sure that pip is installed.
   config_text = Path('pyproject.toml').read_text('utf8')
-  # Python's standard library does contain a TOML parser after all...
   try:
+    # Recent versions of pip include the tomli package.
     import pip._vendor.tomli
     config = pip._vendor.tomli.loads(config_text)
   except ModuleNotFoundError:
+    # Older versions of pip include the toml package instead.
     import pip._vendor.toml # type: ignore
     config = pip._vendor.toml.loads(config_text)
   dependency_config = config.get('project', {}).get('optional-dependencies', {})
@@ -209,6 +219,7 @@ def develop() -> None:
 @command
 def publish_docs() -> None:
   """update documentation on GitHub pages"""
+  import tempfile
   with tempfile.TemporaryDirectory(prefix='publish-docs') as temp:
     copy(env.docs_html, temp)
     exec(['git', 'checkout', 'gh-pages'])
