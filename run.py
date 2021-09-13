@@ -82,6 +82,7 @@ class Env:
     self.docs_build = self.docs / '_build'
     self.docs_html = self.docs_build / 'html'
     self.html_index = self.docs_html / 'index.html'
+    self.venv = self.cwd / '.venv'
 env = Env()
 
 def make_directory(*pathsegments: PathType) -> None:
@@ -130,6 +131,13 @@ def open_file(*pathsegments: PathType) -> None:
 
 def bootstrap() -> None:
   """WIP: DO NOT USE"""
+  # If not running inside virtual environment...
+  if sys.prefix == sys.base_prefix:
+    # TODO Check for existing venv
+    # Create new virtual environment.
+    exec([sys.executable or 'python', '-m', env.venv])
+    # TODO Activate virtual environment
+
   config_text = Path('pyproject.toml').read_text('utf8')
   # Python's standard library does contain a TOML parser after all...
   try:
