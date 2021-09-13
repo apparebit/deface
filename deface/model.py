@@ -33,8 +33,9 @@ containing far more optional than required attributes, this seems like a
 necessary restriction to ensure that generated JSON remains free of distracting
 noise.
 
-Currently, there is no support for reading in generated JSON again; adding that
-feature has high priority.
+The model can easily be reinstated from its JSON serialization post-by-post with
+:py:meth:`Post.from_dict`. For interface uniformity, all model classes implement
+this class method, even if they needn't patch fields.
 """
 
 from __future__ import annotations
@@ -42,7 +43,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 from deface.error import MergeError
 
 
@@ -70,12 +71,23 @@ class MediaType(enum.Enum):
 
 @dataclasses.dataclass(frozen=True)
 class Comment:
-  """
-  A comment on a post, photo, or video.
-  """
+  """A comment on a post, photo, or video."""
   author: str
+  """The comment's author."""
+
   comment: str
+  """The comment's text."""
+
   timestamp: int
+  """The comment's timestamp."""
+
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> Comment:
+    """
+    Create a new comment from its previously serialized and then deserialized
+    JSON representation.
+    """
+    return cls(**data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -91,6 +103,14 @@ class Event:
 
   end_timestamp: int
   """The end of the event or zero for events without a defined duration."""
+
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> Event:
+    """
+    Create a new event from its previously serialized and then deserialized JSON
+    representation.
+    """
+    return cls(**data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -137,6 +157,14 @@ class ExternalContext:
   attribute.
   """
 
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> ExternalContext:
+    """
+    Create a new external context from its previously serialized and then
+    deserialized JSON representation.
+    """
+    return cls(**data)
+
 
 @dataclasses.dataclass(frozen=True)
 class Location:
@@ -172,21 +200,25 @@ class Location:
   ``longitude`` attributes are optional.
   """
   name: str
+  """The location's name."""
+
   address: Optional[str] = None
+  """The location's address."""
 
   latitude: Optional[float] = None
   """
-  The latitude. In the original Facebook post data, this attribute is nested
-  inside the ``coordinate`` attribute.
+  The location's latitude. In the original Facebook post data, this attribute is
+  nested inside the ``coordinate`` attribute.
   """
 
   longitude: Optional[float] = None
   """
-  The longitude. In the original Facebook data, this attribute is nested inside
-  the ``coordinate`` attribute.
+  The location's longitude. In the original Facebook data, this attribute is
+  nested inside the ``coordinate`` attribute.
   """
 
   url: Optional[str] = None
+  """"The URL for the location on `<https://www.facebook.com>`_."""
 
   def is_mergeable_with(self, other: Location) -> bool:
     """
@@ -224,6 +256,15 @@ class Location:
     else:
       return other
 
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> Location:
+    """
+    Create a new location from its previously serialized and then deserialized
+    JSON representation.
+    """
+    return cls(**data)
+
+
 @dataclasses.dataclass(frozen=True)
 class MediaMetaData:
   """
@@ -249,6 +290,14 @@ class MediaMetaData:
   original_height: Optional[int] = None
   original_width: Optional[int] = None
   taken_timestamp: Optional[int] = None
+
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> MediaMetaData:
+    """
+    Create a new media metadata from its previously serialized and then
+    deserialized JSON representation.
+    """
+    return cls(**data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -278,7 +327,7 @@ class Media:
   uri: str
   """
   The path to the photo or video file within the personal data archive. In terms
-  of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`, the attribute
+  of `RFC 3986 <https://www.rfc-editor.org/rfc/rfc3986.txt>`_, the attribute
   provides a *relative-path reference*, i.e., it lacks a scheme such as
   ``file:`` and does not start with a slash ``/``. However, it should not be
   resolved relative to the file containing the field but rather from the root of
@@ -286,6 +335,11 @@ class Media:
   """
 
   creation_timestamp: Optional[int] = None
+  """
+  Seemingly the timestamp for when the media object was created *on Facebook*.
+  In the original Facebook, this timestamp differs from the post's timestamp by
+  less than 30 seconds.
+  """
 
   description: Optional[str] = None
   """
@@ -308,6 +362,11 @@ class Media:
   """
 
   title: Optional[str] = None
+  """
+  The title for the photo or video. This field is filled in automatically and
+  hence generic. Common variations are ``Mobile Uploads`` or ``Timeline Photos``
+  for photos and the empty string for videos.
+  """
 
   upload_timestamp: Optional[int] = None
   """
@@ -317,6 +376,20 @@ class Media:
   However, since it really is part of Facebook's data on the use of the photo or
   video, it is hoisted into the media record during ingestion.
   """
+
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> Media:
+    """
+    Create a new media descriptor from its previously serialized and then
+    deserialized JSON representation.
+    """
+    data['comments'] = tuple(
+      [Comment.from_dict(c) for c in data.get('comments', [])]
+    )
+    data['media_type'] = MediaType[data['media_type']]
+    if data.get('metadata'):
+      data['metadata'] = MediaMetaData.from_dict(data['metadata'])
+    return cls(**data)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -343,7 +416,7 @@ class Post:
   tags: tuple[str, ...]
   """The tags for a post, including friends and pages."""
 
-  text: list[str]
+  text: tuple[str, ...]
   """The text introducing a shared memory."""
 
   timestamp: int
@@ -356,6 +429,7 @@ class Post:
   """A backdated timestamp. Its semantics are unclear."""
 
   event: Optional[Event] = None
+  """The event this post is about."""
 
   external_context: Optional[ExternalContext] = None
   """An external context, typically with URL only."""
@@ -447,13 +521,36 @@ class Post:
       collect(media)
     return dataclasses.replace(self, media=tuple(by_uri.values()))
 
+  @classmethod
+  def from_dict(cls, data: dict[str, Any]) -> Post:
+    """
+    Create a new post from its previously serialized and then deserialized JSON
+    representation.
+    """
+    data['media'] = tuple([Media.from_dict(m) for m in data.get('media', [])])
+    data['places'] = tuple(
+      [Location.from_dict(l) for l in data.get('places', [])]
+    )
+    data['tags'] = tuple(data.get('tags', []))
+    data['text'] = tuple(data.get('text', []))
+    if data.get('event'):
+      data['event'] = Event.from_dict(data['event'])
+    if data.get('external_context'):
+      data['external_context'] = ExternalContext.from_dict(
+        data['external_context']
+      )
+    return cls(**data)
+
 
 class PostHistory:
   """
-  A history of posts. This class tracks added posts by timestamp so that it can
-  merge posts that only differ in media while also eliminating duplicate posts.
-  The latter is important when ingesting posts from more than one personal data
-  archive, since the archives may just overlap in time.
+  A history of posts. Use :py:meth:`add` to add posts one-by-one, as they are
+  ingested. This class organizes them by :py:attr:`Post.timestamp`. That lets it
+  easily merge posts that only differ in media as well as eliminate duplicate
+  posts. The latter is particularly important when ingesting posts from more
+  than one personal data archive, since archives may just overlap in time. Once
+  all posts have been added to the history, :py:meth:`timeline` returns a list
+  of all unique posts sorted by ``timestamp``.
   """
   def __init__(self) -> None:
     self._posts: dict[int, Union[Post, list[Post]]] = dict()
