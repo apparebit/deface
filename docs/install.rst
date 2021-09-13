@@ -21,9 +21,11 @@ That makes the ``deface`` command available in your shell. Try running it:
 Use as Library
 --------------
 
-If you want to use *deface* as a library from within your own code, you
-install the package just the same. Just remember to add the dependency to your
-project's ``requirements.txt`` or ``pyproject.toml``.
+As long you comply by the terms of the license, you can also use *deface* as a
+library within your own code. Notably, that enables you to use the model classes
+for representing cleaned up and simplified posts. To this end, you install the
+package just the same. Just remember to add the dependency to your project's
+``requirements.txt`` or ``pyproject.toml``.
 
 
 Modify deface
