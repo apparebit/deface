@@ -25,14 +25,14 @@ import tempfile
 from typing import Any, Callable, Union
 
 # This is not a module!
-__all__ = []
+__all__: list[str] = []
 
 # ------------------------------------------------------------------------------
 # Utilities: Logging
 
-is_tracing = False
-sgr = lambda c: f'\x1b[{c}m'
-log_prefix = f'{sys.argv[0]} >> '
+is_tracing: bool = False
+sgr: Callable[[str], str] = lambda c: f'\x1b[{c}m'
+log_prefix: str = f'{sys.argv[0]} >> '
 
 def trace(message: str, *args: Any, **kwargs: Any) -> None:
   """Write the formatted message to standard error in verbose mode."""
@@ -57,7 +57,7 @@ def announce(message: str) -> None:
 # Utilities: Program Execution
 
 def exec(
-  command: Union[str, list[str]], **kwargs: Any
+  command: Union[str, list[Any]], **kwargs: Any
 ) -> subprocess.CompletedProcess:
   """Run the given command in a subprocess."""
   if isinstance(command, list):
@@ -71,9 +71,11 @@ def exec(
 # ------------------------------------------------------------------------------
 # Utilities: File and Directory Manipulation
 
+PathType = Union[str, os.PathLike]
+
 class Env:
   """The environment."""
-  def __init__(self):
+  def __init__(self) -> None:
     self.cwd = Path(__file__).resolve().parent
     self.dist = self.cwd / 'dist'
     self.docs = self.cwd / 'docs'
@@ -82,13 +84,13 @@ class Env:
     self.html_index = self.docs_html / 'index.html'
 env = Env()
 
-def make_directory(*pathsegments):
+def make_directory(*pathsegments: PathType) -> None:
   """Ensure that the given directory exists."""
   path = Path(*pathsegments)
   trace('make_directory {}', path)
   os.makedirs(path, exist_ok=True)
 
-def copy(source, destination):
+def copy(source: PathType, destination: PathType) -> None:
   """Copy files from source path too destination path."""
   trace('copy {} {}', source, destination)
   shutil.copytree(
@@ -96,39 +98,62 @@ def copy(source, destination):
     ignore=shutil.ignore_patterns('.DS_Store', '__pycache__')
   )
 
-def delete_directory(*pathsegments):
+def delete_directory(*pathsegments: PathType) -> None:
   """Delete the given directory."""
   path = Path(*pathsegments)
   trace('delete_directory {}', path)
   shutil.rmtree(path, ignore_errors=True)
 
-def delete_contents(*pathsegments):
+def delete_contents(*pathsegments: PathType) -> None:
   """Delete all entries from the given directory."""
   path = Path(*pathsegments)
   trace('delete_contents {}', path)
-  for item in path:
+  for item in path.iterdir():
     if item.is_dir():
       shutil.rmtree(item, ignore_errors=True)
     else:
       item.unlink(missing_ok=True)
 
-def open_file(*pathsegments):
+def open_file(*pathsegments: PathType) -> None:
   """Open a file in a suitable application."""
   path = Path(*pathsegments)
   trace('open_file {}', path)
-  # FIXME: This works on macOS only.
-  subprocess.run(['open', path], check=True)
+  if sys.platform.startswith('darwin'):
+    subprocess.run(['open', path], check=True)
+  elif sys.platform.startswith('win32'):
+    os.startfile(path) # Only available on Windows
+  else:
+    raise NotImplementedError(f'open_file() does not support {sys.platform}')
+
+# ------------------------------------------------------------------------------
+# Bootstrap
+
+def bootstrap() -> None:
+  """WIP: DO NOT USE"""
+  config_text = Path('pyproject.toml').read_text('utf8')
+  # Python's standard library does contain a TOML parser after all...
+  try:
+    import pip._vendor.tomli
+    config = pip._vendor.tomli.loads(config_text)
+  except ModuleNotFoundError:
+    import pip._vendor.toml # type: ignore
+    config = pip._vendor.toml.loads(config_text)
+  dependency_config = config.get('project', {}).get('optional-dependencies', {})
+  dependencies = [d for ds in dependency_config.values() for d in ds]
+  if len(dependencies) > 0:
+    exec(['pip', 'install'] + dependencies)
 
 # ------------------------------------------------------------------------------
 # @command
 
-commands = {}
-def command(fn: Callable[[], None]) -> Callable[[], None]:
+CommandType = Callable[[], None]
+commands: dict[str, CommandType] = {}
+def command(fn: CommandType) -> CommandType:
   """Turn a function into a command."""
   name = fn.__name__
 
   @functools.wraps(fn)
-  def wrapper():
+  def wrapper() -> None:
     announce(name)
     fn()
 
@@ -139,32 +164,44 @@ def command(fn: Callable[[], None]) -> Callable[[], None]:
 # The Commands
 
 @command
-def clean():
+def init() -> None:
+  """initialize for development (currently does nothing)"""
+  pass
+
+@command
+def clean() -> None:
   """delete build artifacts"""
   delete_directory(env.dist)
   delete_directory(env.docs_build)
   make_directory(env.docs_build)
 
 @command
-def mypy():
-  """check types"""
+def inspect() -> None:
+  """run static code inspections"""
   exec('mypy')
 
 @command
-def pytest():
-  """run unit tests"""
-  exec('pytest')
+def test() -> None:
+  """run tests while also determining coverage"""
+  exec(['pytest', '--cov=deface'])
 
 @command
-def docs():
+def document() -> None:
   """build documentation"""
   exec(['sphinx-build', '-M', 'html', env.docs, env.docs_build])
   open_file(env.html_index)
 
 @command
-def github_pages():
-  """update GitHub pages"""
-  with tempfile.TemporaryDirectory(prefix='run-github-pages') as temp:
+def develop() -> None:
+  """run inspect, test, and document commands as one"""
+  inspect()
+  test()
+  document()
+
+@command
+def publish_docs() -> None:
+  """update documentation on GitHub pages"""
+  with tempfile.TemporaryDirectory(prefix='publish-docs') as temp:
     copy(env.docs_html, temp)
     exec(['git', 'checkout', 'gh-pages'])
     delete_contents(env.cwd)
@@ -172,20 +209,16 @@ def github_pages():
   exec(['git', 'add', '.'])
   exec(['git', 'commit', '-m', 'Update gh-pages'])
   #exec(['git', 'push'])
-  exec(['git', 'checkout', 'master'])
+  exec(['git', 'checkout', 'boss'])
 
 @command
-def build():
-  """check code and build documentation"""
-  mypy()
-  pytest()
-  docs()
-
-@command
-def release():
+def release() -> None:
   """release a new version"""
-  exec(['flit', 'build', '--no-setup-py'])
-  exec(['flit', 'publish'])
+  clean()
+  develop()
+  publish_docs()
+  #exec(['flit', 'build', '--no-setup-py'])
+  #exec(['flit', 'publish'])
 
 # ------------------------------------------------------------------------------
 # The Argument Parser
@@ -220,8 +253,8 @@ parser.add_argument(
 
 args = parser.parse_args()
 if not args.color:
-  sgr = lambda c: ''
+  sgr = lambda _: ''
 if args.verbose:
   is_tracing = True
-for command in args.commands:
-  commands[command]()
+for command_name in args.commands:
+  commands[command_name]()
