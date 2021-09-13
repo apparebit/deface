@@ -498,7 +498,7 @@ class PostHistory:
         posts.append(value)
       else:
         posts.extend(value)
-    sorted(posts, key=lambda p: p.timestamp)
+    posts.sort(key=lambda p: p.timestamp)
     return posts
 
 
