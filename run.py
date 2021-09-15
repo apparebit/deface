@@ -18,13 +18,11 @@ import argparse
 import functools
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
-from typing import Any, Callable, Union
-
-# Don't even think of importing run!
-__all__: list[str] = []
+from typing import Any, Callable, Optional, Union
 
 # ------------------------------------------------------------------------------
 # Utilities: Logging
@@ -50,40 +48,21 @@ def warn(message: str) -> None:
   println('1;103', message, '0;49')
 
 # ------------------------------------------------------------------------------
-# Utilities: Program Execution
-
-def exec(
-  command: Union[str, list[Any]], **kwargs: Any
-) -> subprocess.CompletedProcess:
-  """Run the given command in a subprocess."""
-  if isinstance(command, list):
-    command = [str(c) for c in command]
-    trace(' '.join(command))
-  else:
-    command = str(command)
-    trace(command)
-  return subprocess.run(command, check=True, **kwargs)
-
-# ------------------------------------------------------------------------------
 # Utilities: File and Directory Manipulation
 
 PathType = Union[str, os.PathLike]
-
 class Env:
   """The environment."""
   def __init__(self) -> None:
+    self.path = os.environ['PATH']
     self.cwd = Path(__file__).resolve().parent
     self.dist = self.cwd / 'dist'
     self.docs = self.cwd / 'docs'
-    self.docs_build = self.docs / '_build'
-    self.docs_html = self.docs_build / 'html'
-    self.html_index = self.docs_html / 'index.html'
-    self.venv = self.cwd / '.venv'
+    self.venv = Path(sys.prefix)
 env = Env()
 
-def make_directory(*pathsegments: PathType) -> None:
+def make_directory(path: PathType) -> None:
   """Ensure that the given directory exists."""
-  path = Path(*pathsegments)
   trace('make_directory {}', path)
   os.makedirs(path, exist_ok=True)
 
@@ -95,25 +74,22 @@ def copy(source: PathType, destination: PathType) -> None:
     ignore=shutil.ignore_patterns('.DS_Store', '__pycache__')
   )
 
-def delete_directory(*pathsegments: PathType) -> None:
+def delete_directory(path: PathType) -> None:
   """Delete the given directory."""
-  path = Path(*pathsegments)
   trace('delete_directory {}', path)
   shutil.rmtree(path, ignore_errors=True)
 
-def delete_contents(*pathsegments: PathType) -> None:
+def delete_contents(path: PathType) -> None:
   """Delete all entries from the given directory."""
-  path = Path(*pathsegments)
   trace('delete_contents {}', path)
-  for item in path.iterdir():
-    if item.is_dir():
-      shutil.rmtree(item, ignore_errors=True)
-    else:
-      item.unlink(missing_ok=True)
+  for entry in os.scandir(path):
+    if entry.is_symlink() or entry.is_file():
+      Path(entry.path).unlink(missing_ok=True)
+    elif entry.is_dir():
+      shutil.rmtree(entry, ignore_errors=True)
 
-def open_file(*pathsegments: PathType) -> None:
+def open_file(path: PathType) -> None:
   """Open a file in a suitable application."""
-  path = Path(*pathsegments)
   trace('open_file {}', path)
   if sys.platform.startswith('darwin'):
     subprocess.run(['open', path], check=True)
@@ -123,30 +99,92 @@ def open_file(*pathsegments: PathType) -> None:
     raise NotImplementedError(f'open_file() does not support {sys.platform}')
 
 # ------------------------------------------------------------------------------
-# Bootstrap
+# Utilities: Program Execution
+
+exec_env: dict[str, str] = {
+  'VIRTUAL_ENV': sys.prefix,
+  'PATH': env.path,
+}
+
+def exec(
+  command: Union[str, list[Any]], **kwargs: Any
+) -> subprocess.CompletedProcess:
+  """Run the given command in a subprocess."""
+  # Stringify command, as trace(), subprocess.run() don't accept path objects.
+  if isinstance(command, list):
+    command = [str(c) for c in command]
+    trace(' '.join(command))
+  else:
+    command = str(command)
+    trace(command)
+
+  kwargs['env'] = exec_env | kwargs.get('env', {})
+  return subprocess.run(command, check=True, **kwargs)
+
+# ------------------------------------------------------------------------------
+# Virtual Environment
+
+VENV_BIN = 'Scripts' if sys.platform == 'win32' else 'bin'
+VENV_CONFIG = 'pyvenv.cfg'
+VENV_DIR = '.venv'
+VENV_SEP = re.compile(r'\s*=\s*')
+
+def is_venv_running() -> bool:
+  """Test whether Python is running within a PEP 405 virtual environment."""
+  return sys.prefix != getattr(sys, 'base_prefix', sys.prefix)
+
+def load_venv_config(path: PathType) -> dict[str, str]:
+  """Parse a virtual environment's configuration."""
+  with open(path, encoding='utf8') as file:
+    lines = file.read().splitlines()
+  pairs = [VENV_SEP.split(l) for l in lines if l.strip()]
+  return { k.strip(): v.strip() for [k, v] in pairs}
+
+def validate_as_venv(path: PathType) -> Optional[dict[str, str]]:
+  """Validate given path as virtual environment, returning its configuration."""
+  path = Path(path)
+
+  if path.exists() and (cfg_path := path / VENV_CONFIG).exists():
+    try:
+      cfg = load_venv_config(cfg_path)
+      if 'home' in cfg:
+        return cfg
+    except:
+      pass
+  return None
 
 def virtualize() -> None:
-  if not (env.venv / 'bin' / 'activate').exists():
-    # Create new virtual environment:
-    # exec([sys.executable or 'python3', '-m', env.venv])
-    pass
-  # Activate virtual environment:
-  # ./bin/activate && ./run.py init
-  warn('Remember to activate virtual environment:')
-  warn('$ source bin/activate')
-
-def bootstrap() -> None:
-  """WIP: DO NOT USE"""
-  # If we are not running inside a virtual environment
-  if sys.prefix == sys.base_prefix:
-    virtualize()
+  """Ensure that Python running in a subprocess uses a virtual environment."""
+  if is_venv_running():
     return
 
-  # Ensure pip is installed and not too old.
+  env.venv = env.cwd / VENV_DIR
+  if not env.venv.exists():
+    announce(f'Create virtual environment in {env.venv}')
+    exec(['python3', '-m', 'venv', env.venv])
+  elif not validate_as_venv(env.venv):
+    raise RuntimeError(
+      f'Directory {env.venv} is in the way of an actual virtual environment. '
+      'Please delete it!'
+    )
+
+  exec_env['VIRTUAL_ENV'] = str(env.venv)
+  exec_env['PATH'] = str(env.venv / VENV_BIN) + os.pathsep + env.path
+
+# ------------------------------------------------------------------------------
+# Bootstrap
+
+def ensure_pip() -> None:
+  """Ensure that pip is installed and not too old."""
   exec([sys.executable or 'python', '-m', 'ensurepip', '--upgrade'])
 
+def lookup_dependencies() -> list[str]:
+  """
+  Extract the project's optional dependencies. This function requires that pip
+  is installed.
+  """
   # We need a TOML parser to get dependencies, but Python's standard library
-  # does not have one. Thankfully, we just made sure that pip is installed.
+  # does not have one (yet).
   config_text = Path('pyproject.toml').read_text('utf8')
   try:
     # Recent versions of pip include the tomli package.
@@ -156,10 +194,9 @@ def bootstrap() -> None:
     # Older versions of pip include the toml package instead.
     import pip._vendor.toml # type: ignore
     config = pip._vendor.toml.loads(config_text)
-  dependency_config = config.get('project', {}).get('optional-dependencies', {})
-  dependencies = [d for ds in dependency_config.values() for d in ds]
-  if len(dependencies) > 0:
-    exec(['pip', 'install'] + dependencies)
+  groups = config.get('project', {}).get('optional-dependencies', {})
+  groups = [g for g in groups.items() if g == 'dev' or g == 'doc' or g =='test']
+  return [d for ds in groups.values() for d in ds]
 
 # ------------------------------------------------------------------------------
 # @command
@@ -173,7 +210,10 @@ def command(fn: CommandType) -> CommandType:
   @functools.wraps(fn)
   def wrapper() -> None:
     announce(name)
-    fn()
+    try:
+      fn()
+    except subprocess.CalledProcessError:
+      pass
 
   commands[name] = wrapper
   return fn
@@ -182,16 +222,11 @@ def command(fn: CommandType) -> CommandType:
 # The Commands
 
 @command
-def init() -> None:
-  """initialize for development (currently does nothing)"""
-  pass
-
-@command
 def clean() -> None:
   """delete build artifacts"""
   delete_directory(env.dist)
-  delete_directory(env.docs_build)
-  make_directory(env.docs_build)
+  delete_directory(env.docs / '_build')
+  make_directory(env.docs / '_build')
 
 @command
 def inspect() -> None:
@@ -206,8 +241,8 @@ def test() -> None:
 @command
 def document() -> None:
   """build documentation"""
-  exec(['sphinx-build', '-M', 'html', env.docs, env.docs_build])
-  open_file(env.html_index)
+  exec(['sphinx-build', '-M', 'html', env.docs, env.docs / '_build'])
+  open_file(env.docs / '_build' / 'html' / 'index.html')
 
 @command
 def develop() -> None:
@@ -221,7 +256,7 @@ def publish_docs() -> None:
   """update documentation on GitHub pages"""
   import tempfile
   with tempfile.TemporaryDirectory(prefix='publish-docs') as temp:
-    copy(env.docs_html, temp)
+    copy(env.docs / '_build' / 'html', temp)
     exec(['git', 'checkout', 'gh-pages'])
     delete_contents(env.cwd)
     copy(temp, env.cwd)
