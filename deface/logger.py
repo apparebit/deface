@@ -36,12 +36,8 @@ class Logger:
   """
   A simple console logger. By default, the logger prefixes messages with the
   given ``prefix`` followed by appropriate emoji. If the underlying ``stream``
-  is a TTY, it also uses ANSI escape codes to style messages.
-
-  :param stream: The stream to write to, which defaults to standard error.
-  :param prefix: The prefix for messages written to the stream.
-  :param use_color: The flag for using color, which defaults to ``True``.
-  :param use_emoji: The flag for using emoji, which defaults to ``True``.
+  is a TTY, it also uses ANSI escape codes to style messages. The use of color
+  or emoji can be disabled by setting the corresponding argument to false.
   """
   def __init__(
     self,
@@ -133,8 +129,6 @@ class Logger:
     Print a summarizing message at completion of a tool run. If the output
     stream is a TTY, the message is highlighted in red or green, depending on
     whether any errors have been reported.
-
-    :param message: The farewell message.
     """
     if self.error_count > 0:
       self.print_in_red(message)
