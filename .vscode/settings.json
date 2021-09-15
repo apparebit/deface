@@ -3,6 +3,8 @@
     "isatty",
     "mojibake",
     "println",
+    "pyproject",
+    "pyvenv",
     "Róisín",
     "serde",
     "tomli"
