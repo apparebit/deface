@@ -298,7 +298,7 @@ def publish_docs() -> None:
   with temporary_directory(prefix='publish-docs') as tmpdir:
     copy(fs.docs / '_build' / 'html', tmpdir)
     exec('git', 'checkout', 'gh-pages')
-    delete_contents(fs.cwd, excludes=set(['.git']))
+    delete_contents(fs.cwd, excludes=set(['.git', '.gitignore']))
     copy(tmpdir, fs.cwd)
 
   # Commit documentation to gh-pages
