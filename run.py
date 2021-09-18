@@ -314,7 +314,6 @@ def release() -> None:
   check()
   test()
   document()
-  publish_docs()
   exec('flit', 'publish')
 
 # --------------------------------------------------------------------------------------
