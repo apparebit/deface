@@ -39,21 +39,36 @@ in the ``project.optional-dependencies`` table of ``pyproject.toml``. You can
 use any package manager supporting that convention, such as `flit
 <https://github.com/takluyver/flit>`_, to install the dependencies.
 
-The repository's root includes the ``run.py`` script as a lightweight build
-tool. Have a look at its help message:
+You can also use the ``run.py`` script in the repository root. Unless you are
+already running the script in a virtual environment, it automatically bootstraps
+a virtual environment for the project and installs all necessary
+development-only dependencies. From then on out, it ensures that Python scripts
+execute within the virtual environment, even if the commands are not obviously
+written in Python.
 
-.. code-block:: shell
+To find out more about supported commands and their options, please check out
+``run.py``'s help message:
 
-   $ ./run.py -h
-   usage: run.py [-h] [--color | --no-color] [-v] COMMAND [COMMAND ...]
+.. sphinx_argparse_cli::
+   :module: run
+   :func: create_parser
+   :prog: run.py
+   :title:
+   :group_title_prefix:
 
-   supported commands:
-   ...
+**...**
 
 If you try this yourself, you will see that ``run.py`` has commands for all
-common development tasks including making releases. At the same time, its
-implementation comprises less than 300 lines of well-documented code and thus is
-easily modifyable. That is only possible because ``run.py``, as hinted at by its
-name, delegates the heavy lifting to other tools. The goal is to bootstrap these
-tools through ``run.py`` as well, even when starting with a fresh Python
-installation.
+development tasks including making a release. It can also execute arbitrary
+``python`` and ``pip`` invocations.
+
+Despite all these features, ``run.py`` has *no* external dependencies (beyond
+Python and pip) and comprises less than 400 well-documented and -structured
+lines of code. Hence, if the need arises, you should be able to easily modify
+existing commands or add entirely new ones.
+
+Look for the ``@command`` decorator to register a function as implementation for
+the eponymous command. The function can either accept no arguments — a so-called
+*simple* command — or arbitrarily many positional arguments — implementing a
+*special* command. In that case, ``run.py`` forwards all command line arguments
+appearing after the command name as they are.
