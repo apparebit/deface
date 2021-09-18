@@ -86,10 +86,10 @@ ensuring that all of a post's media have the same description. And when removing
 redundant locations, that means not dropping the one with the URL.
 
 The validation principle goes beyond the preservation principle by requiring
-human intervention when data deviates from the expected schema. More permissive
-designs such as `protocol buffers
+human intervention when the original Facebook data deviates from the expected
+schema. More permissive designs such as `protocol buffers
 <https://developers.google.com/protocol-buffers>`_ are certainly feasible but
-critically depend on common rules for compatible schema evolution. That's not
+critically depend on common rules for compatible schema evolution. That is not
 feasible for this use case and hence the only reasonable option is to disallow
 automatic schema evolution. Since posts are independent top-level entities, that
 doesn't mean to terminate post processing upon first failure. We can still

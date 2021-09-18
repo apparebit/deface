@@ -10,8 +10,8 @@
   <meta property="og:description" content="The design and implementation of deface adhere to three principles: Preserve independent semantic concepts as records. Also preserve all key, value pairs within those records. Critically, the immed..." />
   <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Changelog" href="changelog.html" /><link rel="prev" title="Motivation" href="motivation.html" />
 
-    <meta name="generator" content="sphinx-4.1.2, furo 2021.08.31"/>
-        <title>Design Considerations - deface 0.5.0 documentation</title>
+    <meta name="generator" content="sphinx-4.2.0, furo 2021.09.08"/>
+        <title>Design Considerations - deface 0.6.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=c7c65a82b42f6b978e58466c1e9ef2509836d916" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
@@ -129,7 +129,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">deface 0.5.0 documentation</div></a>
+      <a href="index.html"><div class="brand">deface 0.6.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -152,7 +152,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">deface 0.5.0 documentation</span>
+  <span class="sidebar-brand-text">deface 0.6.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -193,7 +193,7 @@
   </aside>
   <div class="main">
     <div class="content">
-      <article role="main">
+      <div class="article-container">
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
             <button class="theme-toggle">
@@ -208,7 +208,8 @@
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
-        <section id="design-considerations">
+        <article role="main">
+          <section id="design-considerations">
 <h1>Design Considerations<a class="headerlink" href="#design-considerations" title="Permalink to this headline">¶</a></h1>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
@@ -289,9 +290,9 @@ diverge. When hoisting descriptions from media objects to posts, that means
 ensuring that all of a post’s media have the same description. And when removing
 redundant locations, that means not dropping the one with the URL.</p>
 <p>The validation principle goes beyond the preservation principle by requiring
-human intervention when data deviates from the expected schema. More permissive
-designs such as <a class="reference external" href="https://developers.google.com/protocol-buffers">protocol buffers</a> are certainly feasible but
-critically depend on common rules for compatible schema evolution. That’s not
+human intervention when the original Facebook data deviates from the expected
+schema. More permissive designs such as <a class="reference external" href="https://developers.google.com/protocol-buffers">protocol buffers</a> are certainly feasible but
+critically depend on common rules for compatible schema evolution. That is not
 feasible for this use case and hence the only reasonable option is to disallow
 automatic schema evolution. Since posts are independent top-level entities, that
 doesn’t mean to terminate post processing upon first failure. We can still
@@ -307,7 +308,8 @@ as well as on individual attributes are included in the API documentation for
 </div>
 </section>
 
-      </article>
+        </article>
+      </div>
       <footer>
         
         <div class="related-pages">
@@ -334,13 +336,11 @@ as well as on individual attributes are included in the API documentation for
         </div>
 
         <div class="related-information">
-              Copyright &#169; 2021, Robert Grimm
-            |
+              Copyright &#169; 2021, Robert Grimm |
             Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
               and
               <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
-              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
-            |
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>. |
             <a class="muted-link" href="_sources/design.rst.txt"
                rel="nofollow">
               Show Source
