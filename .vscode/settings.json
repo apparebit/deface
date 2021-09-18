@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "deps",
     "isatty",
     "mojibake",
     "println",
@@ -8,5 +9,6 @@
     "Róisín",
     "serde",
     "tomli"
-  ]
+  ],
+  "editor.rulers": [ 88 ]
 }
