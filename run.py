@@ -73,7 +73,8 @@ def copy(source: Path, destination: Path) -> None:
   trace('copy {} {}', source, destination)
   shutil.copytree(
     source, destination,
-    ignore=shutil.ignore_patterns('.DS_Store', '__pycache__')
+    ignore=shutil.ignore_patterns('.DS_Store', '__pycache__'),
+    dirs_exist_ok=True,
   )
 
 def delete_directory(path: Path) -> None:
