@@ -44,6 +44,11 @@ doc = [
   "sphinxext-opengraph"
 ]
 
+dev = [
+  "black",
+  "flit"
+]
+
 [project.urls]
 Source = "https://github.com/apparebit/deface"
 Documentation = "https://apparebit.github.io/deface/"
@@ -61,3 +66,7 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+
+[tool.black]
+target-version = ['py39']
+skip-string-normalization = true
