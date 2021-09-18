@@ -490,8 +490,6 @@ class Post:
     media, this method returns a new post that combines the media from both
     posts.
 
-    :param other: the post to merge with.
-
     :raises MergeError: indicates that the two posts differ in more than their
       media or have different media descriptors for the same photo or video.
     """
