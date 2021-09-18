@@ -16,57 +16,59 @@
 
 import argparse
 import functools
+from inspect import signature
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from typing import Any, Callable, Optional, Union
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Utilities: Logging
 
+run_dot_py = p[2:] if (p := sys.argv[0]).startswith('./') else p
 is_tracing: bool = False
+
 sgr: Callable[[str], str] = lambda c: f'\x1b[{c}m'
-log_prefix: str = f'{sys.argv[0]} >> '
 
 def println(on: str, message: str, off: str) -> None:
-  sys.stderr.write(sgr(on) + log_prefix + message + sgr(off) + '\n')
+  """Print the ANSI escape code ``on``, message, and escape code ``off``."""
+  sys.stderr.write(f'{sgr(on)}{run_dot_py} >> {message}{sgr(off)}\n')
 
 def trace(message: str, *args: Any, **kwargs: Any) -> None:
-  """Write the formatted message to standard error in verbose mode."""
+  """If in verbose mode, write the formatted message to standard error."""
   if is_tracing:
     println('1', message.format(*args, **kwargs), '0')
 
 def announce(message: str) -> None:
-  """Write the message to standard error."""
-  println('1;97;45', message, '0;39;49')
+  """Write the highlighted announcement message to standard error."""
+  println('1;45;38;5;231', message, '0;49;39')
 
-def warn(message: str) -> None:
-  """Write the message to standard error."""
+def warning(message: str) -> None:
+  """Write the warning message to standard error."""
   println('1;103', message, '0;49')
 
-# ------------------------------------------------------------------------------
+def error(message: str) -> None:
+  """Write the error message to standard error."""
+  println('1;31', message, '0;39')
+
+# --------------------------------------------------------------------------------------
 # Utilities: File and Directory Manipulation
 
-PathType = Union[str, os.PathLike]
-class Env:
-  """The environment."""
-  def __init__(self) -> None:
-    self.path = os.environ['PATH']
-    self.cwd = Path(__file__).resolve().parent
-    self.dist = self.cwd / 'dist'
-    self.docs = self.cwd / 'docs'
-    self.venv = Path(sys.prefix)
-env = Env()
+class temporary_directory(tempfile.TemporaryDirectory):
+  """Create temporary directory, return context manager that binds to path."""
+  def __enter__(self) -> Path:
+    return Path(super().__enter__())
 
-def make_directory(path: PathType) -> None:
+def make_directory(path: Path) -> None:
   """Ensure that the given directory exists."""
-  trace('make_directory {}', path)
+  trace('make directory {}', path)
   os.makedirs(path, exist_ok=True)
 
-def copy(source: PathType, destination: PathType) -> None:
+def copy(source: Path, destination: Path) -> None:
   """Copy files from source path too destination path."""
   trace('copy {} {}', source, destination)
   shutil.copytree(
@@ -74,23 +76,23 @@ def copy(source: PathType, destination: PathType) -> None:
     ignore=shutil.ignore_patterns('.DS_Store', '__pycache__')
   )
 
-def delete_directory(path: PathType) -> None:
+def delete_directory(path: Path) -> None:
   """Delete the given directory."""
-  trace('delete_directory {}', path)
+  trace('delete directory {}', path)
   shutil.rmtree(path, ignore_errors=True)
 
-def delete_contents(path: PathType) -> None:
+def delete_contents(path: Path) -> None:
   """Delete all entries from the given directory."""
-  trace('delete_contents {}', path)
-  for entry in os.scandir(path):
+  trace('delete directory contents {}', path)
+  for entry in path.iterdir():
     if entry.is_symlink() or entry.is_file():
-      Path(entry.path).unlink(missing_ok=True)
+      entry.unlink(missing_ok=True)
     elif entry.is_dir():
       shutil.rmtree(entry, ignore_errors=True)
 
-def open_file(path: PathType) -> None:
-  """Open a file in a suitable application."""
-  trace('open_file {}', path)
+def open_file(path: Path) -> None:
+  """Open the file in a suitable application."""
+  trace('open file {}', path)
   if sys.platform.startswith('darwin'):
     subprocess.run(['open', path], check=True)
   elif sys.platform.startswith('win32'):
@@ -98,30 +100,40 @@ def open_file(path: PathType) -> None:
   else:
     raise NotImplementedError(f'open_file() does not support {sys.platform}')
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # Utilities: Program Execution
 
 exec_env: dict[str, str] = {
+  'PATH': os.environ['PATH'],
+  'TERM': os.environ['TERM'],
   'VIRTUAL_ENV': sys.prefix,
-  'PATH': env.path,
 }
 
 def exec(
-  command: Union[str, list[Any]], **kwargs: Any
+  *command: Union[str, Path], **kwargs: Any
 ) -> subprocess.CompletedProcess:
   """Run the given command in a subprocess."""
   # Stringify command, as trace(), subprocess.run() don't accept path objects.
-  if isinstance(command, list):
-    command = [str(c) for c in command]
-    trace(' '.join(command))
-  else:
-    command = str(command)
-    trace(command)
+  cmd = [str(c) for c in command]
+  trace(' '.join(cmd))
 
+  # Merge environment variables, then spawn subprocess with command.
   kwargs['env'] = exec_env | kwargs.get('env', {})
-  return subprocess.run(command, check=True, **kwargs)
+  return subprocess.run(cmd, check=True, **kwargs)
 
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
+# Utilities: File System Paths
+
+class FS:
+  """Useful file system paths."""
+  def __init__(self) -> None:
+    self.cwd = Path(__file__).resolve().parent
+    self.dist = self.cwd / 'dist'
+    self.docs = self.cwd / 'docs'
+    self.venv = Path(sys.prefix)
+fs = FS()
+
+# --------------------------------------------------------------------------------------
 # Virtual Environment
 
 VENV_BIN = 'Scripts' if sys.platform == 'win32' else 'bin'
@@ -129,186 +141,257 @@ VENV_CONFIG = 'pyvenv.cfg'
 VENV_DIR = '.venv'
 VENV_SEP = re.compile(r'\s*=\s*')
 
+PY_PROJECT = 'pyproject.toml'
+PY_PROJECT_GROUPS = {'dev', 'doc', 'test'}
+
 def is_venv_running() -> bool:
   """Test whether Python is running within a PEP 405 virtual environment."""
   return sys.prefix != getattr(sys, 'base_prefix', sys.prefix)
 
-def load_venv_config(path: PathType) -> dict[str, str]:
+def load_venv_config(path: Path) -> dict[str, str]:
   """Parse a virtual environment's configuration."""
   with open(path, encoding='utf8') as file:
     lines = file.read().splitlines()
   pairs = [VENV_SEP.split(l) for l in lines if l.strip()]
   return { k.strip(): v.strip() for [k, v] in pairs}
 
-def validate_as_venv(path: PathType) -> Optional[dict[str, str]]:
+def validate_as_venv(path: Path) -> Optional[dict[str, str]]:
   """Validate given path as virtual environment, returning its configuration."""
-  path = Path(path)
-
   if path.exists() and (cfg_path := path / VENV_CONFIG).exists():
     try:
       cfg = load_venv_config(cfg_path)
       if 'home' in cfg:
         return cfg
-    except:
-      pass
+    except Exception as x:
+      error(f'error loading {cfg_path}: {x.args[0]}')
   return None
 
+def activate_venv(venv: Path) -> None:
+  """Activate the virtual environment."""
+  fs.venv = venv
+  exec_env['PATH'] = str(venv / VENV_BIN) + os.pathsep + os.environ['PATH']
+  exec_env['VIRTUAL_ENV'] = str(venv)
+
+def install_venv(venv: Path) -> None:
+  """Create a new virtual environment."""
+  exec('python3', '-m', 'venv', venv)
+
+def lookup_dependencies(pyproject: Path) -> list[str]:
+  """Extract project's optional dependencies."""
+  cfg_text = pyproject.read_text('utf8')
+  # Recent versions of pip include tomli, older versions include toml.
+  from importlib import import_module
+  try:
+    cfg = import_module('pip._vendor.tomli').loads(cfg_text) # type: ignore
+  except ModuleNotFoundError:
+    cfg = import_module('pip._vendor.toml').loads(cfg_text) # type: ignore
+  groups = cfg.get('project', {}).get('optional-dependencies', {})
+  return [deps for g in groups if g in PY_PROJECT_GROUPS for deps in groups[g]]
+
+def python(*arguments: Union[str, Path]) -> None:
+  """invoke python on the arguments"""
+  exec('python3', *arguments)
+
+def pip(*arguments: Union[str, Path]) -> None:
+  """invoke pip on the arguments"""
+  exec('python3', '-m', 'pip', *arguments)
+
+def bootstrap(project_root: Path = fs.cwd) -> None:
+  """install virtual environment and development dependencies"""
+  venv = project_root / VENV_DIR
+  announce(f'ensure virtual environment exists: {venv}')
+  install_venv(venv)
+  activate_venv(venv)
+
+  dependencies = lookup_dependencies(project_root / PY_PROJECT)
+  announce('ensure packages are installed')
+  trace(', '.join(dependencies[:7]))
+  trace(', '.join(dependencies[7:]))
+  pip('install', *dependencies)
+
 def virtualize() -> None:
-  """Ensure that Python running in a subprocess uses a virtual environment."""
+  """Ensure that subprocesses use virtual environment."""
   if is_venv_running():
     return
+  venv = fs.cwd / VENV_DIR
+  if not venv.exists():
+    bootstrap(fs.cwd)
+  elif validate_as_venv(venv):
+    activate_venv(venv)
+  else:
+    error(f'please delete {venv} obstructing virtual environment')
+    raise RuntimeError(f'virtual environment obstructed by {venv}')
 
-  env.venv = env.cwd / VENV_DIR
-  if not env.venv.exists():
-    announce(f'Create virtual environment in {env.venv}')
-    exec(['python3', '-m', 'venv', env.venv])
-  elif not validate_as_venv(env.venv):
-    raise RuntimeError(
-      f'Directory {env.venv} is in the way of an actual virtual environment. '
-      'Please delete it!'
-    )
-
-  exec_env['VIRTUAL_ENV'] = str(env.venv)
-  exec_env['PATH'] = str(env.venv / VENV_BIN) + os.pathsep + env.path
-
-# ------------------------------------------------------------------------------
-# Bootstrap
-
-def ensure_pip() -> None:
-  """Ensure that pip is installed and not too old."""
-  exec([sys.executable or 'python', '-m', 'ensurepip', '--upgrade'])
-
-def lookup_dependencies() -> list[str]:
-  """
-  Extract the project's optional dependencies. This function requires that pip
-  is installed.
-  """
-  # We need a TOML parser to get dependencies, but Python's standard library
-  # does not have one (yet).
-  config_text = Path('pyproject.toml').read_text('utf8')
-  try:
-    # Recent versions of pip include the tomli package.
-    import pip._vendor.tomli
-    config = pip._vendor.tomli.loads(config_text)
-  except ModuleNotFoundError:
-    # Older versions of pip include the toml package instead.
-    import pip._vendor.toml # type: ignore
-    config = pip._vendor.toml.loads(config_text)
-  groups = config.get('project', {}).get('optional-dependencies', {})
-  groups = [g for g in groups.items() if g == 'dev' or g == 'doc' or g =='test']
-  return [d for ds in groups.values() for d in ds]
-
-# ------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
 # @command
 
-CommandType = Callable[[], None]
-commands: dict[str, CommandType] = {}
-def command(fn: CommandType) -> CommandType:
+CommandT = Callable[..., None]
+
+special_commands: set[str] = set()
+commands: dict[str, Callable[..., None]] = {}
+
+def make_command(
+  fn: CommandT, *, name: Optional[str] = None, force_simple: bool = False
+) -> CommandT:
   """Turn a function into a command."""
-  name = fn.__name__
+  cmd_name: str = fn.__name__ if name is None else name
 
   @functools.wraps(fn)
-  def wrapper() -> None:
-    announce(name)
-    try:
-      fn()
-    except subprocess.CalledProcessError:
-      pass
+  def wrapper(*args: str) -> None:
+    announce(cmd_name + ' ' + ', '.join(args) if args else cmd_name)
+    fn(*args)
 
-  commands[name] = wrapper
+  if (not force_simple) and len(signature(fn).parameters) > 0:
+    special_commands.add(cmd_name)
+  commands[cmd_name] = wrapper
   return fn
 
-# ------------------------------------------------------------------------------
+command = make_command
+command(bootstrap, force_simple=True)
+command(python)
+command(pip)
+
+# --------------------------------------------------------------------------------------
 # The Commands
 
 @command
 def clean() -> None:
   """delete build artifacts"""
-  delete_directory(env.dist)
-  delete_directory(env.docs / '_build')
-  make_directory(env.docs / '_build')
+  delete_directory(fs.dist)
+  delete_directory(fs.docs / '_build')
+  make_directory(fs.docs / '_build')
 
 @command
-def inspect() -> None:
+def check() -> None:
   """run static code inspections"""
-  exec('mypy')
+  exec('mypy', '--color-output')
 
 @command
 def test() -> None:
   """run tests while also determining coverage"""
-  exec(['pytest', '--cov=deface'])
+  exec('pytest', '--cov=deface')
 
 @command
 def document() -> None:
   """build documentation"""
-  exec(['sphinx-build', '-M', 'html', env.docs, env.docs / '_build'])
-  open_file(env.docs / '_build' / 'html' / 'index.html')
+  exec('sphinx-build', '-M', 'html', fs.docs, fs.docs / '_build')
+  open_file(fs.docs / '_build' / 'html' / 'index.html')
 
 @command
-def develop() -> None:
-  """run inspect, test, and document commands as one"""
-  inspect()
-  test()
-  document()
+def build() -> None:
+  """build binary and source distributions"""
+  exec('flit', 'build')
 
 @command
 def publish_docs() -> None:
   """update documentation on GitHub pages"""
-  import tempfile
-  with tempfile.TemporaryDirectory(prefix='publish-docs') as temp:
-    copy(env.docs / '_build' / 'html', temp)
-    exec(['git', 'checkout', 'gh-pages'])
-    delete_contents(env.cwd)
-    copy(temp, env.cwd)
-  exec(['git', 'add', '.'])
-  exec(['git', 'commit', '-m', 'Update gh-pages'])
-  #exec(['git', 'push'])
-  exec(['git', 'checkout', 'boss'])
+  with temporary_directory(prefix='publish-docs') as tmpdir:
+    copy(fs.docs / '_build' / 'html', tmpdir)
+    exec('git', 'checkout', 'gh-pages')
+    delete_contents(fs.cwd)
+    copy(tmpdir, fs.cwd)
+  exec('git', 'add', '.')
+  exec('git', 'commit', '-m', 'Update gh-pages')
+  exec('git', 'push')
+  exec('git', 'checkout', 'boss')
 
 @command
 def release() -> None:
   """release a new version"""
   clean()
-  develop()
+  check()
+  test()
+  document()
   publish_docs()
-  #exec(['flit', 'build', '--no-setup-py'])
-  #exec(['flit', 'publish'])
+  exec('flit', 'publish')
 
-# ------------------------------------------------------------------------------
-# The Argument Parser
+# --------------------------------------------------------------------------------------
+# Command Line Arguments
 
-name_width = len('--color, --no-color  ')
-description = 'supported commands:\n  ' + '\n  '.join([
-  f'{name.ljust(name_width)}{command.__doc__}'
-  for name, command in commands.items()
-])
-parser = argparse.ArgumentParser(
-  description=description,
-  formatter_class=argparse.RawDescriptionHelpFormatter
-)
-parser.add_argument(
-  'commands',
-  metavar='COMMAND', nargs='+', choices=commands.keys(),
-  help='execute the command'
-)
-parser.add_argument(
-  '--color',
-  action=argparse.BooleanOptionalAction, default=sys.stderr.isatty(),
-  help='enable / disable use of color in output'
-)
-parser.add_argument(
-  '-v', '--verbose',
-  action='store_true', default=False,
-  help="enable verbose mode"
-)
+def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
+  # Prepare command descriptions
+  width = len('--color, --no-color  ')
 
-# ------------------------------------------------------------------------------
-# Run the given commands.
+  lines: list[str] = ['special commands (one per invocation):\n']
+  for name, command in commands.items():
+    if name in special_commands:
+      lines.append(f'  {name} ARG ...'.ljust(width) + f'{command.__doc__}\n')
+  lines.append('\nsimple commands (one or more per invocation):\n')
+  for name, command in commands.items():
+    if not name in special_commands:
+      lines.append(f'  {name}'.ljust(width) + f'{command.__doc__}\n')
+  lines.extend([
+    f"\n{run_dot_py} automatically creates a new virtual environment if one doesn't\n",
+    "exist. It runs all Python code in that virtual environment.\n"
+  ])
 
-args = parser.parse_args()
-if not args.color:
-  sgr = lambda _: ''
-if args.verbose:
-  is_tracing = True
-for command_name in args.commands:
-  commands[command_name]()
+  # Instantiate parser
+  parser = argparse.ArgumentParser(
+    prog=run_dot_py, epilog=''.join(lines), allow_abbrev=False,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+  )
+  parser.add_argument(
+    '--color',
+    action=argparse.BooleanOptionalAction, default=sys.stderr.isatty(),
+    help='enable / disable use of color in output'
+  )
+  parser.add_argument(
+    '-v', '--verbose',
+    action='store_true', default=False,
+    help="enable verbose mode"
+  )
+  if with_commands:
+    parser.add_argument(
+      'commands', metavar='COMMAND', nargs='+', choices=commands.keys(),
+      help='execute comand as described below'
+    )
+  return parser
+
+def parse_arguments() -> argparse.Namespace:
+  result = argparse.Namespace(commands=[], extras=None)
+  arguments = sys.argv[1:]
+
+  # Handle special commands, which consume rest of arguments
+  for index, argument in enumerate(arguments):
+    if argument in special_commands:
+      result.commands.append(argument)
+      result.extras = arguments[index + 1:]
+      arguments = arguments[:index]
+      break
+    elif not argument.startswith('-'):
+      break
+
+  # Parse arguments
+  parser = create_parser(with_commands=result.extras is None)
+  parser.parse_args(args=arguments, namespace=result)
+  result.extras = [] if result.extras is None else result.extras
+  return result
+
+# --------------------------------------------------------------------------------------
+# The main function
+
+def main() -> None:
+  """Parse command line arguments as commands and then run the requested commands."""
+  # Parse arguments.
+  args = parse_arguments()
+  if not args.color:
+    global sgr
+    sgr = lambda _: ''
+  if args.verbose:
+    global is_tracing
+    is_tracing = True
+
+  # Ensure we are running inside virtual environment.
+  virtualize()
+  trace('current Python prefix {}', sys.prefix)
+  trace('subprocess prefix {}', fs.venv)
+
+  # Execute the requested commands.
+  try:
+    for command_name in args.commands:
+      commands[command_name](*args.extras)
+  except subprocess.CalledProcessError:
+    pass
+
+if __name__ == '__main__':
+  main()
