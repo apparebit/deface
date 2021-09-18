@@ -86,7 +86,7 @@ def delete_contents(path: Path, excludes: set[str]) -> None:
   """Delete all entries from the given directory."""
   trace('delete directory contents {}', path)
   for entry in path.iterdir():
-    if entry in excludes:
+    if entry.name in excludes or str(entry) in excludes:
       continue
     if entry.is_symlink() or entry.is_file():
       entry.unlink(missing_ok=True)
@@ -288,11 +288,20 @@ def build() -> None:
 @command
 def publish_docs() -> None:
   """update documentation on GitHub pages"""
+  # Build documentation.
+  clean()
+  check()
+  test()
+  document()
+
+  # Copy documentation aside.
   with temporary_directory(prefix='publish-docs') as tmpdir:
     copy(fs.docs / '_build' / 'html', tmpdir)
     exec('git', 'checkout', 'gh-pages')
     delete_contents(fs.cwd, excludes=set(['.git']))
     copy(tmpdir, fs.cwd)
+
+  # Commit documentation to gh-pages
   exec('git', 'add', '.')
   exec('git', 'commit', '-m', 'Update gh-pages')
   exec('git', 'push')
