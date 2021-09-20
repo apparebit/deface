@@ -85,6 +85,7 @@ def delete_directory(path: Path) -> None:
 def delete_contents(path: Path, excludes: set[str]) -> None:
   """Delete all entries from the given directory."""
   trace('delete directory contents {}', path)
+  trace('excluding {}', excludes)
   for entry in path.iterdir():
     if entry.name in excludes or str(entry) in excludes:
       continue
@@ -326,11 +327,11 @@ def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
   lines: list[str] = ['special commands (one per invocation):\n']
   for name, command in commands.items():
     if name in special_commands:
-      lines.append(f'  {name} ARG ...'.ljust(width) + f'{command.__doc__}\n')
+      lines.append('  ' + f'{name} ARG ...'.ljust(width) + f'{command.__doc__}\n')
   lines.append('\nsimple commands (one or more per invocation):\n')
   for name, command in commands.items():
     if not name in special_commands:
-      lines.append(f'  {name}'.ljust(width) + f'{command.__doc__}\n')
+      lines.append('  ' + f'{name}'.ljust(width) + f'{command.__doc__}\n')
   lines.extend([
     f"\n{run_dot_py} automatically creates a new virtual environment if one doesn't\n",
     "exist. It runs all Python code in that virtual environment.\n"
@@ -343,7 +344,7 @@ def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
   )
   parser.add_argument(
     '--color',
-    action=argparse.BooleanOptionalAction, default=sys.stderr.isatty(),
+    action=argparse.BooleanOptionalAction, default=None,
     help='enable / disable use of color in output'
   )
   parser.add_argument(
@@ -354,7 +355,7 @@ def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
   if with_commands:
     parser.add_argument(
       'commands', metavar='COMMAND', nargs='+', choices=commands.keys(),
-      help='execute comand as described below'
+      help='execute comand as described above'
     )
   return parser
 
@@ -383,13 +384,16 @@ def parse_arguments() -> argparse.Namespace:
 
 def main() -> None:
   """Parse command line arguments as commands and then run the requested commands."""
+  global sgr
+  global is_tracing
+
   # Parse arguments.
   args = parse_arguments()
+  if args.color is None:
+    args.color = sys.stderr.isatty()
   if not args.color:
-    global sgr
-    sgr = lambda _: ''
+    args.color = lambda _: ''
   if args.verbose:
-    global is_tracing
     is_tracing = True
 
   # Ensure we are running inside virtual environment.
@@ -397,12 +401,18 @@ def main() -> None:
   trace('current Python prefix {}', sys.prefix)
   trace('subprocess prefix {}', fs.venv)
 
-  # Execute the requested commands.
+  # Execute the requested commands. The first exception terminates all commands.
   try:
     for command_name in args.commands:
       commands[command_name](*args.extras)
   except subprocess.CalledProcessError:
     pass
+  except Exception as x:
+    import traceback
+    error(f'{command_name} failed: {x.args[0]}')
+    if is_tracing:
+      trace('error traceback:')
+      traceback.print_tb(x.__traceback__, file=sys.stderr)
 
 if __name__ == '__main__':
   main()
