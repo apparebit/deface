@@ -45,7 +45,7 @@ class Logger:
     prefix: str = '',
     use_color: bool = True,
     use_emoji: bool = True,
-  ):
+  ) -> None:
     self._line_count: int = 0
     self._error_count: int = 0
     self._warn_count: int = 0

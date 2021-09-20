@@ -61,7 +61,7 @@ def _is_void(value: Any) -> bool:
 def prepare(data: Any) -> Any:
   """
   Prepare the given value for serialization to JSON. This function recursively
-  replaces enumeration constants with their names, list and tuples with
+  replaces enumeration constants with their names, lists and tuples with
   equivalent lists, and dataclasses and dictionaries with equivalent
   dictionaries. While generating equivalent dictionaries, it also filters out
   entries that are ``None``, the empty list ``[]``, or the empty tuple ``()``.

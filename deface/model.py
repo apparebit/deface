@@ -13,13 +13,14 @@
 # limitations under the License.
 
 """
-The data model for posts. This module defines the *deface*'s improved post
-schema, starting with the :py:class:`Post` dataclass and including all nested
-dependencies :py:class:`Comment`, :py:class:`Event`,
-:py:class:`ExternalContext`, :py:class:`Location`, :py:class:`Media`,
-:py:class:`MediaMetaData`, and :py:class:`MediaType`. It also defines the
+The data model for posts. This module defines the *deface*'s own post schema,
+which captures all Facebook post data in a much simpler fashion. The main type
+is the :py:class:`Post` dataclass. It depends on the :py:class:`Comment`,
+:py:class:`Event`, :py:class:`ExternalContext`, :py:class:`Location`,
+:py:class:`Media`, and :py:class:`MediaMetaData` dataclasses as well as the
+:py:class:`MediaType` enumeration. This module also defines the
 :py:class:`PostHistory` and :py:func:`find_simultaneous_posts` helpers for
-building up a coherent timeline.
+building up a coherent timeline from Facebook post data.
 
 The schema uses Python tuples instead of lists because the former are immutable
 and thus do not get in the way of all model classes being both equatable and
@@ -28,14 +29,17 @@ hashable.
 The model's JSON serialization follows directly from its definition, with every
 dataclass instance becoming an object in the JSON text that has the same fields
 — with one important exception: If an attribute has ``None`` or the empty tuple
-``()`` as its value, then it is omitted from serialization. With the schema
-containing far more optional than required attributes, this seems like a
-necessary restriction to ensure that generated JSON remains free of distracting
-noise.
+``()`` as its value, :py:func:`deface.serde.prepare` removes it from the JSON
+representation. Since the schema needs to capture all information contained in
+Facebook post data, it includes a relatively large number of optional
+attributes. Including them in the serialized representation seems to have little
+benefit while cluttering the JSON text.
 
-The model can easily be reinstated from its JSON serialization post-by-post with
-:py:meth:`Post.from_dict`. For interface uniformity, all model classes implement
-this class method, even if they needn't patch fields.
+The model can easily be reinstated from its JSON text post-by-post by passing
+the deserialized dictionary to :py:meth:`Post.from_dict`. The method patches the
+representation of nested model types and also fills in ``None`` and ``()``
+values. For uniformity of mechanism, all model classes implement ``from_dict``,
+even if they do not need to patch fields before invoking the constructor.
 """
 
 from __future__ import annotations
@@ -84,8 +88,9 @@ class Comment:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Comment:
     """
-    Create a new comment from its previously serialized and then deserialized
-    JSON representation.
+    Create a new comment from deserialized JSON text. This method assumes that
+    the JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     return cls(**data)
 
@@ -107,8 +112,9 @@ class Event:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Event:
     """
-    Create a new event from its previously serialized and then deserialized JSON
-    representation.
+    Create a new event from deserialized JSON text. This method assumes that the
+    JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     return cls(**data)
 
@@ -160,8 +166,9 @@ class ExternalContext:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> ExternalContext:
     """
-    Create a new external context from its previously serialized and then
-    deserialized JSON representation.
+    Create a new external context from deserialized JSON text. This method
+    assumes that the JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     return cls(**data)
 
@@ -259,8 +266,9 @@ class Location:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Location:
     """
-    Create a new location from its previously serialized and then deserialized
-    JSON representation.
+    Create a new location from deserialized JSON text. This method assumes that
+    the JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     return cls(**data)
 
@@ -294,8 +302,9 @@ class MediaMetaData:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> MediaMetaData:
     """
-    Create a new media metadata from its previously serialized and then
-    deserialized JSON representation.
+    Create new media metadata from deserialized JSON text. This method assumes
+    that the JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     return cls(**data)
 
@@ -380,8 +389,9 @@ class Media:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Media:
     """
-    Create a new media descriptor from its previously serialized and then
-    deserialized JSON representation.
+    Create a new media descriptor from deserialized JSON text. This method
+    assumes that the JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     data['comments'] = tuple(
       [Comment.from_dict(c) for c in data.get('comments', [])]
@@ -522,8 +532,9 @@ class Post:
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Post:
     """
-    Create a new post from its previously serialized and then deserialized JSON
-    representation.
+    Create a new post from deserialized JSON text. This method assumes that the
+    JSON text was created by serializing the result of
+    :py:func:`deface.serde.prepare`, just as :py:func:`deface.serde.dumps` does.
     """
     data['media'] = tuple([Media.from_dict(m) for m in data.get('media', [])])
     data['places'] = tuple(

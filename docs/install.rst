@@ -28,8 +28,8 @@ package just the same. Just remember to add the dependency to your project's
 ``requirements.txt`` or ``pyproject.toml``.
 
 
-Modify deface
--------------
+Modify Source Code
+------------------
 
 While *deface* has no runtime dependencies outside Python's standard library, it
 does have several buildtime dependencies, e.g., for checking types, generating
@@ -38,6 +38,10 @@ documentation, and making a release. Consistent with `PEP 621
 in the ``project.optional-dependencies`` table of ``pyproject.toml``. You can
 use any package manager supporting that convention, such as `flit
 <https://github.com/takluyver/flit>`_, to install the dependencies.
+
+
+run.py
+^^^^^^
 
 You can also use the ``run.py`` script in the repository root. Unless you are
 already running the script in a virtual environment, it automatically bootstraps
@@ -56,7 +60,7 @@ To find out more about supported commands and their options, please check out
    :title:
    :group_title_prefix:
 
-**...**
+*followed by description of commands...*
 
 If you try this yourself, you will see that ``run.py`` has commands for all
 development tasks including making a release. It can also execute arbitrary

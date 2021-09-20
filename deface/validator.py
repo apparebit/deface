@@ -32,7 +32,7 @@ class Validator(Generic[T]):
     filename: str = '',
     key: Optional[KeyT] = None,
     parent: Optional[Validator[T]] = None,
-  ):
+  ) -> None:
     """
     Create a new validator instance with the given key and value. When directly
     creating the root validator for a JSON document, provide the ``value`` and
@@ -71,8 +71,8 @@ class Validator(Generic[T]):
   def keypath(self) -> str:
     """
     Determine the key path for this validator value. The key path is composed
-    from list items, formatted as say ``[42]``, and object fields, formatted as
-    ``.answer`` for fields named with Python identifiers or ``["42"]``
+    from list items, formatted as say ``[42]``, and object fields, formatted
+    like ``.answer`` for fields named with Python identifiers or like ``["42"]``
     otherwise.
     """
     def format(key: KeyT) -> str:
@@ -190,10 +190,13 @@ class Validator(Generic[T]):
     :raises TypeError: indicates that the current value is neither list nor
       object, that the key is not an integer even though the current value is a
       list, or that the key is not a string even though the current value is an
-      object. :raises IndexError: indicates that the integer key is out of
-      bounds for the current list value. :raises ValidationError: indicates that
-      the required field named by the given key for the current object value is
-      missing.
+      object.
+
+    :raises IndexError: indicates that the integer key is out of bounds for the
+      current list value.
+
+    :raises ValidationError: indicates that the required field named by the
+      given key for the current object value is missing.
     """
     value = self._value
     if isinstance(value, list):
