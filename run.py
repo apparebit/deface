@@ -135,6 +135,8 @@ def exec(
 
   # Merge environment variables, then spawn subprocess with command.
   kwargs['env'] = _exec_env | kwargs.get('env', {})
+  if 'capture_output' in kwargs and 'encoding' not in kwargs:
+    kwargs['encoding'] = 'utf8'
   return subprocess.run(cmd, check=True, **kwargs)
 
 # --------------------------------------------------------------------------------------
@@ -222,6 +224,10 @@ class VEnv:
     self.project_root = project
     self.root = venv
 
+  def python(self, *args: Union[str, Path], **kwargs: Any) -> None:
+    """invoke python on the arguments"""
+    exec('python3', *args, **kwargs)
+
   def is_venv_running(self) -> bool:
     """Test whether this Python is running within a PEP 405 virtual environment."""
     return sys.prefix != getattr(sys, 'base_prefix', sys.prefix)
@@ -247,8 +253,7 @@ class VEnv:
   def check_active_venv(self) -> None:
     """Check that given path identifies active virtual environment."""
     sys_prefix = exec(
-      'python3', '-c', 'import sys; print(sys.prefix)',
-      capture_output=True, encoding='utf8',
+      'python3', '-c', 'import sys; print(sys.prefix)', capture_output=True
     ).stdout.strip()
     if sys_prefix != str(self.root):
       raise RuntimeError(
@@ -275,11 +280,30 @@ class VEnv:
     except ModuleNotFoundError:
       cfg = import_module('pip._vendor.toml').loads(cfg_text) # type: ignore
     groups = cfg.get('project', {}).get('optional-dependencies', {})
-    return [deps for g in groups if g in VEnv.DEV_GROUPS for deps in groups[g]]
+    return [d.lower() for g in groups if g in VEnv.DEV_GROUPS for d in groups[g]]
 
-  def python(self, *args: Union[str, Path], **kwargs: Any) -> None:
-    """invoke python on the arguments"""
-    exec('python3', *args, **kwargs)
+  def lookup_installed(self) -> dict[str, str]:
+    """Determine all packages installed in the virtual environment."""
+    import json
+    pairs = json.loads(exec(
+      'python3', '-m', 'pip', 'list', '--format', 'json', capture_output=True
+    ).stdout)
+    return { entry['name'].lower(): entry['version'] for entry in pairs }
+
+  def check_installed(self, dependencies: list[str]) -> None:
+    """Check that the dependencies are in fact installed"""
+    installed = self.lookup_installed()
+    missing = set(dependencies) - set(installed)
+    if (lm := len(missing)) > 0:
+      names = ', '.join(missing)
+      raise RuntimeError(
+        (f"dependency {names} is" if lm == 1 else f"dependencies {names} are")
+        + f" not installed; please delete '{self.root}' and run 'bootstrap' again."
+      )
+
+  def upgrade_pip(self) -> None:
+    """upgrade pip to the latest version"""
+    self.python('-m', 'pip', 'install', '--upgrade', 'pip')
 
   def bootstrap(self) -> None:
     """install virtual environment and development dependencies"""
@@ -288,11 +312,13 @@ class VEnv:
     self.activate_venv()
     self.check_active_venv()
 
+    self.upgrade_pip()
     dependencies = self.lookup_dependencies()
     context.logger.announce('ensure packages are installed')
     context.logger.trace(', '.join(dependencies[:7]))
     context.logger.trace(', '.join(dependencies[7:]))
     self.python('-m', 'pip', 'install', *dependencies)
+    self.check_installed(dependencies)
 
   def virtualize(self) -> None:
     """Ensure that subprocesses use virtual environment."""
