@@ -21,21 +21,28 @@ import os
 from pathlib import Path
 import re
 import shutil
-import subprocess
+from subprocess import CompletedProcess, run as subprocess_run
 import sys
 import tempfile
 from typing import Any, Callable, Optional, TextIO, Union
+
+# --------------------------------------------------------------------------------------
+# The Global Context for Namespacing All Utilities
 
 class Context:
   def __init__(self) -> None:
     self._logger: Optional['Logger'] = None
     self._fs: Optional[FS] = None
     self._venv: Optional[VEnv] = None
+    self._exec_env: dict[str, str] = {
+      'PATH': os.environ['PATH'],
+      'TERM': os.environ['TERM'],
+      'VIRTUAL_ENV': sys.prefix,
+    }
 
   @property
   def logger(self) -> 'Logger':
-    if self._logger is None:
-      raise ValueError('cannot access logger before it has been created')
+    assert self._logger, 'logger has not yet been created'
     return self._logger
 
   @logger.setter
@@ -44,8 +51,7 @@ class Context:
 
   @property
   def fs(self) -> 'FS':
-    if self._fs is None:
-      raise ValueError('cannot access file system object before it has been created')
+    assert self._fs, 'file system namespace has not yet been created'
     return self._fs
 
   @fs.setter
@@ -54,23 +60,38 @@ class Context:
 
   @property
   def venv(self) -> 'VEnv':
-    if self._venv is None:
-      raise ValueError(
-        'cannot access virtual environment object before it has been created'
-      )
+    assert self._venv, 'virtual environment namespace has not yet been created'
     return self._venv
 
   @venv.setter
   def venv(self, venv: 'VEnv') -> None:
     self._venv = venv
 
+  def activate_venv(self, path: Path) -> None:
+    self.fs.venv = path
+    # Venv.BIN must be defined by time this method is invoked from VEnv instance.
+    self._exec_env['PATH'] = str(path / VEnv.BIN) + os.pathsep + os.environ['PATH']
+    self._exec_env['VIRTUAL_ENV'] = str(path)
 
-context = Context()
+  def exec(self, *command: Union[str, Path], **kwargs: Any) -> CompletedProcess:
+    """Run the given command in a subprocess."""
+    # Stringify command, as trace(), subprocess.run() don't accept path objects.
+    cmd = [str(c) for c in command]
+    context.logger.trace(' '.join(cmd))
+
+    # Merge environment variables, then spawn subprocess with command.
+    kwargs['env'] = self._exec_env | kwargs.get('env', {})
+    if 'capture_output' in kwargs and 'encoding' not in kwargs:
+      kwargs['encoding'] = 'utf8'
+    return subprocess_run(cmd, check=True, **kwargs)
+
+
+context: Context = Context()
 
 # --------------------------------------------------------------------------------------
-# Utilities: Logging
+# Utilities: Logger
 
-# Is needed before Logger instance can be created.
+# Program name is needed in argument parser, whose results configure logger.
 RUN_DOT_PY: str = p[2:] if (p := sys.argv[0]).startswith('./') else p
 
 class Logger:
@@ -82,7 +103,7 @@ class Logger:
     is_verbose: bool = False,
     stream: TextIO = sys.stderr,
   ) -> None:
-    self.is_tracing: bool = is_verbose
+    self.is_verbose: bool = is_verbose
     self.stream: TextIO = stream
 
     if in_color is None:
@@ -95,49 +116,26 @@ class Logger:
   def _do_not_sgr(self, _: str) -> str:
     return ''
 
-  def println(self, on: str, message: str, off: str) -> None:
+  def _println(self, on: str, message: str, off: str) -> None:
     """Print the ANSI escape code ``on``, message, and escape code ``off``."""
     self.stream.write(f'{self.sgr(on)}{RUN_DOT_PY} >> {message}{self.sgr(off)}\n')
 
   def trace(self, message: str, *args: Any, **kwargs: Any) -> None:
     """If in verbose mode, write the formatted message to standard error."""
-    if self.is_tracing:
-      self.println('1', message.format(*args, **kwargs), '0')
+    if self.is_verbose:
+      self._println('1', message.format(*args, **kwargs), '0')
 
   def announce(self, message: str) -> None:
     """Write the highlighted announcement message to standard error."""
-    self.println('1;45;38;5;231', message, '0;49;39')
+    self._println('1;45;38;5;231', message, '0;49;39')
 
   def warning(self, message: str) -> None:
     """Write the warning message to standard error."""
-    self.println('1;103', message, '0;49')
+    self._println('1;103', message, '0;49')
 
   def error(self, message: str) -> None:
     """Write the error message to standard error."""
-    self.println('1;31', message, '0;39')
-
-# --------------------------------------------------------------------------------------
-# Utilities: Program Execution
-
-_exec_env: dict[str, str] = {
-  'PATH': os.environ['PATH'],
-  'TERM': os.environ['TERM'],
-  'VIRTUAL_ENV': sys.prefix,
-}
-
-def exec(
-  *command: Union[str, Path], **kwargs: Any
-) -> subprocess.CompletedProcess:
-  """Run the given command in a subprocess."""
-  # Stringify command, as trace(), subprocess.run() don't accept path objects.
-  cmd = [str(c) for c in command]
-  context.logger.trace(' '.join(cmd))
-
-  # Merge environment variables, then spawn subprocess with command.
-  kwargs['env'] = _exec_env | kwargs.get('env', {})
-  if 'capture_output' in kwargs and 'encoding' not in kwargs:
-    kwargs['encoding'] = 'utf8'
-  return subprocess.run(cmd, check=True, **kwargs)
+    self._println('1;31', message, '0;39')
 
 # --------------------------------------------------------------------------------------
 # Utilities: File System
@@ -191,22 +189,22 @@ class FS:
       elif entry.is_dir():
         shutil.rmtree(entry, ignore_errors=True)
 
-  def open_file(self, path: Path) -> None:
+  def open_in_app(self, path: Path) -> None:
     """Open the file in a suitable application."""
     context.logger.trace('open file {}', path)
     if sys.platform == 'darwin':
-      exec('open', path)
+      context.exec('open', path)
     elif sys.platform == 'linux':
       if not shutil.which('xdg-open'):
         raise NotImplementedError('unable to locate xdg-open command')
-      exec('xdg-open', path)
+      context.exec('xdg-open', path)
     elif sys.platform.startswith('win32'):
       os.startfile(path) # Only available on Windows
     else:
-      raise NotImplementedError(f'open_file() does not support {sys.platform}')
+      raise NotImplementedError(f'open_in_app() does not support {sys.platform}')
 
 # --------------------------------------------------------------------------------------
-# Virtual Environment
+# Utilities: Virtual Environment
 
 class VEnv:
   BIN = 'Scripts' if sys.platform == 'win32' else 'bin'
@@ -214,7 +212,8 @@ class VEnv:
   DIR = '.venv'
   SEP = re.compile(r'=')
   PYPROJECT = 'pyproject.toml'
-  DEV_GROUPS = {'dev', 'doc', 'test'}
+  # Groups of optional dependencies for development. Based on Flit's.
+  DEPENDENCY_GROUPS = {'dev', 'doc', 'test'}
 
   def __init__(self, project: Optional[Path] = None, venv: Optional[Path] = None):
     if project is None:
@@ -226,7 +225,7 @@ class VEnv:
 
   def python(self, *args: Union[str, Path], **kwargs: Any) -> None:
     """invoke python on the arguments"""
-    exec('python3', *args, **kwargs)
+    context.exec('python3', *args, **kwargs)
 
   def is_venv_running(self) -> bool:
     """Test whether this Python is running within a PEP 405 virtual environment."""
@@ -252,7 +251,7 @@ class VEnv:
 
   def check_active_venv(self) -> None:
     """Check that given path identifies active virtual environment."""
-    sys_prefix = exec(
+    sys_prefix = context.exec(
       'python3', '-c', 'import sys; print(sys.prefix)', capture_output=True
     ).stdout.strip()
     if sys_prefix != str(self.root):
@@ -260,15 +259,9 @@ class VEnv:
         f"Python claims '{sys_prefix}' as venv instead of '{self.root}'"
       )
 
-  def activate_venv(self) -> None:
-    """Activate the virtual environment."""
-    context.fs.venv = self.root
-    _exec_env['PATH'] = str(self.root / VEnv.BIN) + os.pathsep + os.environ['PATH']
-    _exec_env['VIRTUAL_ENV'] = str(self.root)
-
   def install_venv(self) -> None:
     """Create a new virtual environment."""
-    exec('python3', '-m', 'venv', self.root)
+    context.exec('python3', '-m', 'venv', self.root)
 
   def lookup_dependencies(self) -> list[str]:
     """Extract project's optional dependencies."""
@@ -280,20 +273,20 @@ class VEnv:
     except ModuleNotFoundError:
       cfg = import_module('pip._vendor.toml').loads(cfg_text) # type: ignore
     groups = cfg.get('project', {}).get('optional-dependencies', {})
-    return [d.lower() for g in groups if g in VEnv.DEV_GROUPS for d in groups[g]]
+    return [d.lower() for g in groups if g in VEnv.DEPENDENCY_GROUPS for d in groups[g]]
 
   def lookup_installed(self) -> dict[str, str]:
     """Determine all packages installed in the virtual environment."""
     import json
-    pairs = json.loads(exec(
+    pairs = json.loads(context.exec(
       'python3', '-m', 'pip', 'list', '--format', 'json', capture_output=True
     ).stdout)
     return { entry['name'].lower(): entry['version'] for entry in pairs }
 
-  def check_installed(self, dependencies: list[str]) -> None:
+  def check_installed(self, packages: list[str]) -> None:
     """Check that the dependencies are in fact installed"""
     installed = self.lookup_installed()
-    missing = set(dependencies) - set(installed)
+    missing = set(packages) - set(installed)
     if (lm := len(missing)) > 0:
       names = ', '.join(missing)
       raise RuntimeError(
@@ -307,16 +300,16 @@ class VEnv:
 
   def bootstrap(self) -> None:
     """install virtual environment and development dependencies"""
-    context.logger.announce(f"install venv '{self.root}'")
+    logger = context.logger
+    logger.announce(f"install venv '{self.root}'")
     self.install_venv()
-    self.activate_venv()
+    context.activate_venv(self.root)
     self.check_active_venv()
 
     self.upgrade_pip()
     dependencies = self.lookup_dependencies()
-    context.logger.announce('ensure packages are installed')
-    context.logger.trace(', '.join(dependencies[:7]))
-    context.logger.trace(', '.join(dependencies[7:]))
+    logger.announce('ensure packages are installed')
+    logger.trace(', '.join(dependencies))
     self.python('-m', 'pip', 'install', *dependencies)
     self.check_installed(dependencies)
 
@@ -327,7 +320,7 @@ class VEnv:
     if not self.root.exists():
       self.bootstrap()
     elif self.validate_as_venv():
-      self.activate_venv()
+      context.activate_venv(self.root)
       self.check_active_venv()
     else:
       raise RuntimeError(
@@ -335,31 +328,30 @@ class VEnv:
       )
 
 # --------------------------------------------------------------------------------------
-# @command
+# @command Decorator: Adds logging wrapper. Registers command.
 
 CommandT = Callable[..., None]
 
 special_commands: set[str] = set()
 commands: dict[str, Callable[..., None]] = {}
 
-def command(
-  fn: CommandT, *, name: Optional[str] = None, force_simple: bool = False
-) -> CommandT:
+def command(fn: CommandT) -> CommandT:
   """Turn a function into a command."""
-  cmd_name: str = fn.__name__ if name is None else name
+  cmd_name: str = fn.__name__
 
   @functools.wraps(fn)
   def wrapper(*args: str) -> None:
+    # Context's logger is not known when @command decorator runs. Only in wrapper.
     context.logger.announce(cmd_name + ' ' + ', '.join(args) if args else cmd_name)
     fn(*args)
 
-  if (not force_simple) and len(signature(fn).parameters) > 0:
+  if len(signature(fn).parameters) > 0:
     special_commands.add(cmd_name)
   commands[cmd_name] = wrapper
   return fn
 
 # --------------------------------------------------------------------------------------
-# The Commands
+# Actual Commands
 
 @command
 def bootstrap() -> None:
@@ -379,30 +371,32 @@ def pip(*args: Union[str, Path]) -> None:
 @command
 def clean() -> None:
   """delete build artifacts"""
-  context.fs.delete_directory(context.fs.dist)
-  context.fs.delete_directory(context.fs.docs / '_build')
-  context.fs.make_directory(context.fs.docs / '_build')
+  fs = context.fs
+  fs.delete_directory(fs.dist)
+  fs.delete_directory(fs.docs / '_build')
+  fs.make_directory(fs.docs / '_build')
 
 @command
 def check() -> None:
   """run static code inspections"""
-  exec('mypy', '--color-output')
+  context.exec('mypy', '--color-output')
 
 @command
 def test() -> None:
   """run tests while also determining coverage"""
-  exec('pytest', '--cov=deface')
+  context.exec('pytest', '--cov=deface')
 
 @command
 def document() -> None:
   """build documentation"""
-  exec('sphinx-build', '-M', 'html', context.fs.docs, context.fs.docs / '_build')
-  context.fs.open_file(context.fs.docs / '_build' / 'html' / 'index.html')
+  fs = context.fs
+  context.exec('sphinx-build', '-M', 'html', fs.docs, fs.docs / '_build')
+  fs.open_in_app(fs.docs / '_build' / 'html' / 'index.html')
 
 @command
 def build() -> None:
   """build binary and source distributions"""
-  exec('flit', 'build')
+  context.exec('flit', 'build')
 
 @command
 def publish_docs() -> None:
@@ -414,20 +408,18 @@ def publish_docs() -> None:
   document()
 
   # Copy documentation aside.
-  with context.fs.temporary_directory(prefix='publish-docs') as tmpdir:
-    context.fs.copy(context.fs.docs / '_build' / 'html', tmpdir)
-    exec('git', 'checkout', 'gh-pages')
-    context.fs.delete_contents(
-      context.fs.root,
-      excludes=set(['.git', '.gitignore', '.venv'])
-    )
-    context.fs.copy(tmpdir, context.fs.root)
+  fs = context.fs
+  with fs.temporary_directory(prefix='publish-docs') as tmpdir:
+    fs.copy(fs.docs / '_build' / 'html', tmpdir)
+    context.exec('git', 'checkout', 'gh-pages')
+    fs.delete_contents(fs.root, excludes=set(['.git', '.gitignore', '.venv']))
+    fs.copy(tmpdir, context.fs.root)
 
   # Commit documentation to gh-pages
-  exec('git', 'add', '.')
-  exec('git', 'commit', '-m', 'Update gh-pages')
-  exec('git', 'push')
-  exec('git', 'checkout', 'boss')
+  context.exec('git', 'add', '.')
+  context.exec('git', 'commit', '-m', 'Update gh-pages')
+  context.exec('git', 'push')
+  context.exec('git', 'checkout', 'boss')
 
 @command
 def release() -> None:
@@ -436,7 +428,7 @@ def release() -> None:
   check()
   test()
   document()
-  exec('flit', 'publish')
+  context.exec('flit', 'publish')
 
 # --------------------------------------------------------------------------------------
 # Command Line Arguments
@@ -508,29 +500,28 @@ def main() -> None:
   # Parse arguments and instantiate context.
   args = parse_arguments()
 
-  context.logger = Logger(
-    in_color=args.color, is_verbose=args.verbose, stream=sys.stderr
-  )
+  context.logger = logger = (
+    Logger(in_color=args.color, is_verbose=args.verbose, stream=sys.stderr))
   context.fs = FS()
-  context.venv = VEnv()
+  context.venv = venv = VEnv()
 
   # The first exception terminates command processing!
   try:
     # Ensure that spawned processes run within virtual environment.
     if args.commands[0] != 'bootstrap':
-      context.venv.virtualize()
-    context.logger.trace('current Python prefix {}', sys.prefix)
-    context.logger.trace('subprocess prefix {}', context.fs.venv)
+      venv.virtualize()
+    logger.trace('current Python prefix {}', sys.prefix)
+    logger.trace('subprocess prefix {}', context.fs.venv)
 
     # Execute commands.
     for command_name in args.commands:
       commands[command_name](*args.extras)
   except Exception as x:
     import traceback
-    context.logger.error(f'{command_name} failed: {x.args[0]}')
-    if context.logger.is_tracing:
-      context.logger.trace('error traceback:')
-      traceback.print_tb(x.__traceback__, file=context.logger.stream)
+    logger.error(f'{command_name} failed: {x.args[0]}')
+    if logger.is_verbose:
+      logger.trace('error traceback:')
+      traceback.print_tb(x.__traceback__, file=logger.stream)
 
 if __name__ == '__main__':
   main()

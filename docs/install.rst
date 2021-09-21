@@ -65,9 +65,9 @@ To find out more about supported commands and their options, please check out
 
 ``run.py`` has commands for all development tasks from bootstrap to making a
 release. Yet it also has *no* external dependencies (beyond Python and pip) and
-comprises less than 400 well-documented and -structured lines of code. Hence, if
-the need arises, you can easily modify existing commands or add entirely new
-ones yourself.
+comprises a little more than 500 well-documented and -structured lines of code.
+Hence, if the need arises, you can easily modify existing commands or add
+entirely new ones yourself.
 
 To do so, look for the ``@command`` decorator. It registers a function as
 implementation for a command of the same name. The function can either take no
