@@ -48,7 +48,8 @@ already running the script in a virtual environment, it automatically bootstraps
 a virtual environment for the project and installs all necessary
 development-only dependencies. From then on out, it ensures that Python scripts
 execute within the virtual environment, even if the commands are not obviously
-written in Python.
+written in Python. You do not need to activate the virtual environment as long
+as you use ``run.py`` for running tasks.
 
 To find out more about supported commands and their options, please check out
 ``run.py``'s help message:
@@ -60,19 +61,17 @@ To find out more about supported commands and their options, please check out
    :title:
    :group_title_prefix:
 
-*followed by description of commands...*
+*See actual help message of* ``run.py`` *for description of commands.*
 
-If you try this yourself, you will see that ``run.py`` has commands for all
-development tasks including making a release. It can also execute arbitrary
-``python`` and ``pip`` invocations.
+``run.py`` has commands for all development tasks from bootstrap to making a
+release. Yet it also has *no* external dependencies (beyond Python and pip) and
+comprises less than 400 well-documented and -structured lines of code. Hence, if
+the need arises, you can easily modify existing commands or add entirely new
+ones yourself.
 
-Despite all these features, ``run.py`` has *no* external dependencies (beyond
-Python and pip) and comprises less than 400 well-documented and -structured
-lines of code. Hence, if the need arises, you should be able to easily modify
-existing commands or add entirely new ones.
-
-Look for the ``@command`` decorator to register a function as implementation for
-the eponymous command. The function can either accept no arguments — a so-called
-*simple* command — or arbitrarily many positional arguments — implementing a
-*special* command. In that case, ``run.py`` forwards all command line arguments
-appearing after the command name as they are.
+To do so, look for the ``@command`` decorator. It registers a function as
+implementation for a command of the same name. The function can either take no
+arguments — a so-called *simple* command — or arbitrarily many positional
+arguments — a so-called *special* command. ``run.py`` can execute any number of
+simple commands per invocation. But it can only ever execute one special
+command, since that command receives all arguments following the command name.
