@@ -45,7 +45,6 @@ doc = [
 ]
 
 dev = [
-  "black",
   "flit"
 ]
 
