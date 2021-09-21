@@ -302,6 +302,7 @@ class VEnv:
       self.bootstrap()
     elif self.validate_as_venv():
       self.activate_venv()
+      self.check_active_venv()
     else:
       raise RuntimeError(
         f"virtual environment obstructed by {self.root}; please delete"
@@ -490,7 +491,8 @@ def main() -> None:
   # The first exception terminates command processing!
   try:
     # Ensure that spawned processes run within virtual environment.
-    context.venv.virtualize()
+    if args.commands[0] != 'bootstrap':
+      context.venv.virtualize()
     context.logger.trace('current Python prefix {}', sys.prefix)
     context.logger.trace('subprocess prefix {}', context.fs.venv)
 
