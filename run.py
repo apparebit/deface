@@ -68,6 +68,7 @@ class Context:
     self._venv = venv
 
   def activate_venv(self, path: Path) -> None:
+    """Update context to use path as virtual environment path."""
     self.fs.venv = path
     # Venv.BIN must be defined by time this method is invoked from VEnv instance.
     self._exec_env['PATH'] = str(path / VEnv.BIN) + os.pathsep + os.environ['PATH']
