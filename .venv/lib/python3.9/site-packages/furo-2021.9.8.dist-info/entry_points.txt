@@ -1,0 +1,3 @@
+[sphinx.html_themes]
+furo=furo
+

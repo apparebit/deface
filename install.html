@@ -11,7 +11,7 @@
   <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Command Line" href="cli.html" /><link rel="prev" title="Changelog" href="changelog.html" />
 
     <meta name="generator" content="sphinx-4.2.0, furo 2021.09.08"/>
-        <title>Installation - deface 0.6.0 documentation</title>
+        <title>Installation - deface 0.7.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=c7c65a82b42f6b978e58466c1e9ef2509836d916" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css" />
@@ -129,7 +129,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">deface 0.6.0 documentation</div></a>
+      <a href="index.html"><div class="brand">deface 0.7.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -152,7 +152,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">deface 0.6.0 documentation</span>
+  <span class="sidebar-brand-text">deface 0.7.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder=Search name="q" aria-label="Search">
@@ -230,52 +230,55 @@ for representing cleaned up and simplified posts. To this end, you install the
 package just the same. Just remember to add the dependency to your project’s
 <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> or <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>.</p>
 </section>
-<section id="modify-deface">
-<h2>Modify deface<a class="headerlink" href="#modify-deface" title="Permalink to this headline">¶</a></h2>
+<section id="modify-source-code">
+<h2>Modify Source Code<a class="headerlink" href="#modify-source-code" title="Permalink to this headline">¶</a></h2>
 <p>While <em>deface</em> has no runtime dependencies outside Python’s standard library, it
 does have several buildtime dependencies, e.g., for checking types, generating
 documentation, and making a release. Consistent with <a class="reference external" href="https://www.python.org/dev/peps/pep-0621/">PEP 621</a>, these dependencies are specified
 in the <code class="docutils literal notranslate"><span class="pre">project.optional-dependencies</span></code> table of <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>. You can
 use any package manager supporting that convention, such as <a class="reference external" href="https://github.com/takluyver/flit">flit</a>, to install the dependencies.</p>
+<section id="run-py">
+<h3>run.py<a class="headerlink" href="#run-py" title="Permalink to this headline">¶</a></h3>
 <p>You can also use the <code class="docutils literal notranslate"><span class="pre">run.py</span></code> script in the repository root. Unless you are
 already running the script in a virtual environment, it automatically bootstraps
 a virtual environment for the project and installs all necessary
 development-only dependencies. From then on out, it ensures that Python scripts
 execute within the virtual environment, even if the commands are not obviously
-written in Python.</p>
+written in Python. You do not need to activate the virtual environment as long
+as you use <code class="docutils literal notranslate"><span class="pre">run.py</span></code> for running tasks.</p>
 <p>To find out more about supported commands and their options, please check out
 <code class="docutils literal notranslate"><span class="pre">run.py</span></code>’s help message:</p>
 <p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">run</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">color</span> <span class="o">|</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">color</span><span class="p">]</span> <span class="p">[</span><span class="o">-</span><span class="n">v</span><span class="p">]</span> <span class="n">COMMAND</span> <span class="p">[</span><span class="n">COMMAND</span> <span class="o">...</span><span class="p">]</span>
 </pre></div>
 </div>
 <section id="run.py-positional-arguments">
-<h3>positional arguments<a class="headerlink" href="#run.py-positional-arguments" title="Permalink to this headline">¶</a></h3>
+<h4>positional arguments<a class="headerlink" href="#run.py-positional-arguments" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
-<li><p id="run.py-command"><a class="reference internal" href="#run.py-command" title="run.py COMMAND"><strong><code class="docutils literal notranslate"><span class="pre">COMMAND</span></code></strong></a> - execute comand as described below (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
+<li><p id="run.py-command"><a class="reference internal" href="#run.py-command" title="run.py COMMAND"><strong><code class="docutils literal notranslate"><span class="pre">COMMAND</span></code></strong></a> - execute comand as described above (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
 </ul>
 </section>
 <section id="run.py-optional-arguments">
-<h3>optional arguments<a class="headerlink" href="#run.py-optional-arguments" title="Permalink to this headline">¶</a></h3>
+<h4>optional arguments<a class="headerlink" href="#run.py-optional-arguments" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li><p id="run.py--h"><span id="run.py---help"></span><a class="reference internal" href="#run.py--h" title="run.py -h"><strong><code class="docutils literal notranslate"><span class="pre">-h</span></code></strong></a>, <a class="reference internal" href="#run.py---help" title="run.py --help"><strong><code class="docutils literal notranslate"><span class="pre">--help</span></code></strong></a> - show this help message and exit</p></li>
-<li><p id="run.py---color"><span id="run.py---no-color"></span><a class="reference internal" href="#run.py---color" title="run.py --color"><strong><code class="docutils literal notranslate"><span class="pre">--color</span></code></strong></a>, <a class="reference internal" href="#run.py---no-color" title="run.py --no-color"><strong><code class="docutils literal notranslate"><span class="pre">--no-color</span></code></strong></a> - enable / disable use of color in output (default: True) (default: <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p id="run.py---color"><span id="run.py---no-color"></span><a class="reference internal" href="#run.py---color" title="run.py --color"><strong><code class="docutils literal notranslate"><span class="pre">--color</span></code></strong></a>, <a class="reference internal" href="#run.py---no-color" title="run.py --no-color"><strong><code class="docutils literal notranslate"><span class="pre">--no-color</span></code></strong></a> - enable / disable use of color in output (default: <code class="docutils literal notranslate"><span class="pre">None</span></code>)</p></li>
 <li><p id="run.py--v"><span id="run.py---verbose"></span><a class="reference internal" href="#run.py--v" title="run.py -v"><strong><code class="docutils literal notranslate"><span class="pre">-v</span></code></strong></a>, <a class="reference internal" href="#run.py---verbose" title="run.py --verbose"><strong><code class="docutils literal notranslate"><span class="pre">--verbose</span></code></strong></a> - enable verbose mode (default: <code class="docutils literal notranslate"><span class="pre">False</span></code>)</p></li>
 </ul>
 </section>
 </p>
-<p><strong>…</strong></p>
-<p>If you try this yourself, you will see that <code class="docutils literal notranslate"><span class="pre">run.py</span></code> has commands for all
-development tasks including making a release. It can also execute arbitrary
-<code class="docutils literal notranslate"><span class="pre">python</span></code> and <code class="docutils literal notranslate"><span class="pre">pip</span></code> invocations.</p>
-<p>Despite all these features, <code class="docutils literal notranslate"><span class="pre">run.py</span></code> has <em>no</em> external dependencies (beyond
-Python and pip) and comprises less than 400 well-documented and -structured
-lines of code. Hence, if the need arises, you should be able to easily modify
-existing commands or add entirely new ones.</p>
-<p>Look for the <code class="docutils literal notranslate"><span class="pre">@command</span></code> decorator to register a function as implementation for
-the eponymous command. The function can either accept no arguments — a so-called
-<em>simple</em> command — or arbitrarily many positional arguments — implementing a
-<em>special</em> command. In that case, <code class="docutils literal notranslate"><span class="pre">run.py</span></code> forwards all command line arguments
-appearing after the command name as they are.</p>
+<p><em>See actual help message of</em> <code class="docutils literal notranslate"><span class="pre">run.py</span></code> <em>for description of commands.</em></p>
+<p><code class="docutils literal notranslate"><span class="pre">run.py</span></code> has commands for all development tasks from bootstrap to making a
+release. Yet it also has <em>no</em> external dependencies (beyond Python and pip) and
+comprises a little more than 500 well-documented and -structured lines of code.
+Hence, if the need arises, you can easily modify existing commands or add
+entirely new ones yourself.</p>
+<p>To do so, look for the <code class="docutils literal notranslate"><span class="pre">@command</span></code> decorator. It registers a function as
+implementation for a command of the same name. The function can either take no
+arguments — a so-called <em>simple</em> command — or arbitrarily many positional
+arguments — a so-called <em>special</em> command. <code class="docutils literal notranslate"><span class="pre">run.py</span></code> can execute any number of
+simple commands per invocation. But it can only ever execute one special
+command, since that command receives all arguments following the command name.</p>
+</section>
 </section>
 </section>
 
@@ -334,7 +337,10 @@ appearing after the command name as they are.</p>
             <ul>
 <li><a class="reference internal" href="#">Installation</a><ul>
 <li><a class="reference internal" href="#use-as-library">Use as Library</a></li>
-<li><a class="reference internal" href="#modify-deface">Modify deface</a></li>
+<li><a class="reference internal" href="#modify-source-code">Modify Source Code</a><ul>
+<li><a class="reference internal" href="#run-py">run.py</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
