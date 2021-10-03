@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import dataclasses
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from deface.error import DefaceError, MergeError, ValidationError
 from deface.model import (
@@ -276,14 +276,22 @@ def _handle_attachments(
           all_places.append(a_place)
       elif key == 'text':
         all_text.append(inner_data['text'].to_string().value)
-      elif key in fields:
-        inner_data.raise_invalid(f'has repeated value for field "{key}"')
-      elif key == 'event':
-        fields['event'] = ingest_event(inner_data[key])
-      elif key == 'external_context':
-        fields['external_context'] = ingest_external_context(inner_data[key])
-      else: # key == 'name'
-        fields['name'] = inner_data[key].to_string().value
+      else:
+        # Remaining fields may be repeated iff values are the same.
+        attachment: Union[ExternalContext, Event, str]
+        if key == 'event':
+          attachment = ingest_event(inner_data[key])
+        elif key == 'external_context':
+          attachment = ingest_external_context(inner_data[key])
+        elif key == 'name':
+          attachment = inner_data[key].to_string().value
+        else:
+          assert False, f'Internal error due to unexpected key "{key}"'
+
+        if not key in fields:
+          fields[key] = attachment
+        elif attachment != fields[key]:
+          inner_data.raise_invalid(f'has repeated, divergent value for field "{key}"')
 
   return all_media, all_places, all_text
 
