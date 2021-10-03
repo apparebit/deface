@@ -96,12 +96,15 @@ def main() -> None:
 
   history = PostHistory()
   for filename in args.filenames:
+    logger.info(f'Processing file "{filename}"')
     try:
       with open(filename, 'rb') as file:
         json_data = loads(file.read())
     except Exception as read_err:
       logger.error(read_err)
       continue
+    if isinstance(json_data, dict) and 'status_updates' in json_data:
+      json_data = json_data['status_updates']
     if isinstance(json_data, list):
       ingested += len(json_data)
 
@@ -118,8 +121,10 @@ def main() -> None:
   # Warn about multiple posts with the same timestamp. They do happen. But they
   # do happen so rarely that they deserve manual validation.
   simultaneous_posts = find_simultaneous_posts(timeline)
+  simultaneous_count = 0
   for timeline_range in simultaneous_posts:
     count = timeline_range.stop - timeline_range.start
+    simultaneous_count += count
     posts = [timeline[index] for index in timeline_range]
     logger.warn(
       f'There are {count} posts with timestamp {posts[0].timestamp}',
@@ -148,10 +153,14 @@ def main() -> None:
   # Sign off.
   filecount = len(args.filenames)
   sign_off = (
-    f'Created {timeline_length} clean {pluralize(timeline_length, "post")} '
+    f'Created {timeline_length} cleaned {pluralize(timeline_length, "post")} '
     f'from {ingested} raw {pluralize(ingested, "post")} '
   )
   if erroneous > 0:
     sign_off += f'including {erroneous} malformed {pluralize(erroneous, "one")} '
   sign_off += f'from {filecount} input {pluralize(filecount, "file")}.'
+  warned = logger.warning_count
+  if warned:
+    sign_off += f'\nAlso warned {warned} {pluralize(warned, "time")} '
+    sign_off += f'about {simultaneous_count} posts'
   logger.done(sign_off)
