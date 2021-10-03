@@ -30,42 +30,16 @@ from typing import Any, Callable, Optional, TextIO, Union
 # The Global Context for Namespacing All Utilities
 
 class Context:
-  def __init__(self) -> None:
-    self._logger: Optional['Logger'] = None
-    self._fs: Optional[FS] = None
-    self._venv: Optional[VEnv] = None
+  """The context for global state and utility functions"""
+  def __init__(self, *, logger: 'Logger', fs: 'FS', venv: 'VEnv') -> None:
+    self.logger = logger
+    self.fs = fs
+    self.venv = venv
     self._exec_env: dict[str, str] = {
       'PATH': os.environ['PATH'],
       'TERM': os.environ['TERM'],
       'VIRTUAL_ENV': sys.prefix,
     }
-
-  @property
-  def logger(self) -> 'Logger':
-    assert self._logger, 'logger has not yet been created'
-    return self._logger
-
-  @logger.setter
-  def logger(self, logger: 'Logger') -> None:
-    self._logger = logger
-
-  @property
-  def fs(self) -> 'FS':
-    assert self._fs, 'file system namespace has not yet been created'
-    return self._fs
-
-  @fs.setter
-  def fs(self, fs: 'FS') -> None:
-    self._fs = fs
-
-  @property
-  def venv(self) -> 'VEnv':
-    assert self._venv, 'virtual environment namespace has not yet been created'
-    return self._venv
-
-  @venv.setter
-  def venv(self, venv: 'VEnv') -> None:
-    self._venv = venv
 
   def activate_venv(self, path: Path) -> None:
     """Update context to use path as virtual environment path."""
@@ -86,14 +60,13 @@ class Context:
       kwargs['encoding'] = 'utf8'
     return subprocess_run(cmd, check=True, **kwargs)
 
-
-context: Context = Context()
+context: Context
 
 # --------------------------------------------------------------------------------------
 # Utilities: Logger
 
 # Program name is needed in argument parser, whose results configure logger.
-RUN_DOT_PY: str = p[2:] if (p := sys.argv[0]).startswith('./') else p
+RUN_DOT_PY: str = sys.argv[0][2:] if sys.argv[0].startswith('./') else sys.argv[0]
 
 class Logger:
   """A console logger. It may print in color and in detail, to stderr by default"""
@@ -142,7 +115,7 @@ class Logger:
 # Utilities: File System
 
 class TemporaryDirectory(tempfile.TemporaryDirectory):
-  """Context manager for temporary directory named by path object."""
+  """Context manager for temporary directory named by *path object* (not string)."""
   def __enter__(self) -> Path:
     return Path(super().__enter__())
 
@@ -207,47 +180,42 @@ class FS:
 # --------------------------------------------------------------------------------------
 # Utilities: Virtual Environment
 
+class _RUNTIME_DEPENDENCIES_TYPE:
+  pass
+RUNTIME = _RUNTIME_DEPENDENCIES_TYPE()
+
 class VEnv:
   BIN = 'Scripts' if sys.platform == 'win32' else 'bin'
   CONFIG = 'pyvenv.cfg'
   DIR = '.venv'
   SEP = re.compile(r'=')
   PYPROJECT = 'pyproject.toml'
-  # Groups of optional dependencies for development. Based on Flit's.
-  DEPENDENCY_GROUPS = {'dev', 'doc', 'test'}
 
-  def __init__(self, project: Optional[Path] = None, venv: Optional[Path] = None):
-    if project is None:
-      project = context.fs.root
-    if venv is None:
-      venv = project / VEnv.DIR
+  def __init__(self, project: Path, prefix: Optional[Path] = None):
     self.project_root = project
-    self.root = venv
+    self.prefix = project / VEnv.DIR if prefix is None else prefix
 
-  def python(self, *args: Union[str, Path], **kwargs: Any) -> None:
-    """invoke python on the arguments"""
-    context.exec('python3', *args, **kwargs)
-
-  def is_venv_running(self) -> bool:
+  def is_running_in_venv(self) -> bool:
     """Test whether this Python is running within a PEP 405 virtual environment."""
     return sys.prefix != getattr(sys, 'base_prefix', sys.prefix)
 
-  def load_venv_config(self) -> dict[str, str]:
+  def load_config(self) -> dict[str, str]:
     """Parse a virtual environment's configuration."""
-    with open(self.root / VEnv.CONFIG, encoding='utf8') as file:
+    with open(self.prefix / VEnv.CONFIG, encoding='utf8') as file:
       lines = file.read().splitlines()
     pairs = [VEnv.SEP.split(l) for l in lines if l.strip()]
     return { k.strip(): v.strip() for [k, v] in pairs}
 
   def validate_as_venv(self) -> Optional[dict[str, str]]:
     """Validate given path as virtual environment, returning its configuration."""
-    if self.root.exists() and (cfg_path := self.root / VEnv.CONFIG).exists():
-      try:
-        cfg = self.load_venv_config()
-        if 'home' in cfg:
-          return cfg
-      except Exception as x:
-        context.logger.error(f'error loading {cfg_path}: {x.args[0]}')
+    try:
+      cfg = self.load_config()
+      if 'home' in cfg:
+        return cfg
+    except FileNotFoundError:
+      pass
+    except Exception as x:
+      context.logger.error(f'error loading {self.prefix / VEnv.CONFIG}: {x.args[0]}')
     return None
 
   def check_active_venv(self) -> None:
@@ -255,17 +223,15 @@ class VEnv:
     sys_prefix = context.exec(
       'python3', '-c', 'import sys; print(sys.prefix)', capture_output=True
     ).stdout.strip()
-    if sys_prefix != str(self.root):
+    if sys_prefix != str(self.prefix):
       raise RuntimeError(
-        f"Python claims '{sys_prefix}' as venv instead of '{self.root}'"
+        f"Python claims '{sys_prefix}' as venv instead of '{self.prefix}'"
       )
 
-  def install_venv(self) -> None:
-    """Create a new virtual environment."""
-    context.exec('python3', '-m', 'venv', self.root)
-
-  def lookup_dependencies(self) -> list[str]:
-    """Extract project's optional dependencies."""
+  def lookup_dependencies(
+    self, *group_names: Union[_RUNTIME_DEPENDENCIES_TYPE, str]
+  ) -> list[str]:
+    """Extract project's dependencies."""
     cfg_text = (self.project_root / VEnv.PYPROJECT).read_text('utf8')
     # Recent versions of pip include tomli, older versions include toml.
     from importlib import import_module
@@ -273,8 +239,10 @@ class VEnv:
       cfg = import_module('pip._vendor.tomli').loads(cfg_text) # type: ignore
     except ModuleNotFoundError:
       cfg = import_module('pip._vendor.toml').loads(cfg_text) # type: ignore
-    groups = cfg.get('project', {}).get('optional-dependencies', {})
-    return [d.lower() for g in groups if g in VEnv.DEPENDENCY_GROUPS for d in groups[g]]
+    project = cfg.get('project', {})
+    groups = project.get('optional-dependencies', {})
+    groups[RUNTIME] = project.get('dependencies', [])
+    return [d for g in group_names for d in groups.get(g, [])]
 
   def lookup_installed(self) -> dict[str, str]:
     """Determine all packages installed in the virtual environment."""
@@ -288,44 +256,41 @@ class VEnv:
     """Check that the dependencies are in fact installed"""
     installed = self.lookup_installed()
     missing = set(packages) - set(installed)
-    if (lm := len(missing)) > 0:
-      names = ', '.join(missing)
+    if len(missing) > 0:
+      s = ', '.join(missing)
       raise RuntimeError(
-        (f"dependency {names} is" if lm == 1 else f"dependencies {names} are")
-        + f" not installed; please delete '{self.root}' and run 'bootstrap' again."
+        (f"dependency {s} is" if len(missing) == 1 else f"dependencies {s} are")
+        + f" not installed; please delete '{self.prefix}' and run 'bootstrap' again."
       )
-
-  def upgrade_pip(self) -> None:
-    """upgrade pip to the latest version"""
-    self.python('-m', 'pip', 'install', '--upgrade', 'pip')
 
   def bootstrap(self) -> None:
     """install virtual environment and development dependencies"""
     logger = context.logger
-    logger.announce(f"install venv '{self.root}'")
-    self.install_venv()
-    context.activate_venv(self.root)
+    logger.announce(f"install venv '{self.prefix}'")
+    context.exec('python3', '-m', 'venv', self.prefix)
+    context.activate_venv(self.prefix)
     self.check_active_venv()
 
-    self.upgrade_pip()
-    dependencies = self.lookup_dependencies()
-    logger.announce('ensure packages are installed')
+    context.exec('python3', '-m', 'pip', 'install', '--upgrade', 'pip')
+
+    dependencies = self.lookup_dependencies('dev', 'doc', 'test')
+    logger.announce('ensure dev dependencies are installed')
     logger.trace(', '.join(dependencies))
-    self.python('-m', 'pip', 'install', *dependencies)
+    context.exec('python3', '-m', 'pip', 'install', *dependencies)
     self.check_installed(dependencies)
 
   def virtualize(self) -> None:
     """Ensure that subprocesses use virtual environment."""
-    if self.is_venv_running():
+    if self.is_running_in_venv():
       return
-    if not self.root.exists():
+    if not self.prefix.exists():
       self.bootstrap()
     elif self.validate_as_venv():
-      context.activate_venv(self.root)
+      context.activate_venv(self.prefix)
       self.check_active_venv()
     else:
       raise RuntimeError(
-        f"virtual environment obstructed by {self.root}; please delete"
+        f"virtual environment obstructed by {self.prefix}; please delete"
       )
 
 # --------------------------------------------------------------------------------------
@@ -362,12 +327,12 @@ def bootstrap() -> None:
 @command
 def python(*args: Union[str, Path]) -> None:
   """invoke Python on arguments in virtual environment"""
-  context.venv.python(*args)
+  context.exec('python3', *args)
 
 @command
-def pip(*args: Union[str, Path]) -> None:
-  "invoke pip on arguments in virtual environment"
-  context.venv.python('-m', 'pip', *args)
+def deface(*args: Union[str, Path]) -> None:
+  """Run deface with the given arguments"""
+  context.exec('python3', '-m', 'deface', *args)
 
 @command
 def clean() -> None:
@@ -501,16 +466,16 @@ def main() -> None:
   # Parse arguments and instantiate context.
   args = parse_arguments()
 
-  context.logger = logger = (
-    Logger(in_color=args.color, is_verbose=args.verbose, stream=sys.stderr))
-  context.fs = FS()
-  context.venv = venv = VEnv()
+  logger = Logger(in_color=args.color, is_verbose=args.verbose, stream=sys.stderr)
+  fs = FS()
+  global context
+  context = Context(logger=logger, fs=fs, venv=VEnv(fs.root))
 
   # The first exception terminates command processing!
   try:
     # Ensure that spawned processes run within virtual environment.
     if args.commands[0] != 'bootstrap':
-      venv.virtualize()
+      context.venv.virtualize()
     logger.trace('current Python prefix {}', sys.prefix)
     logger.trace('subprocess prefix {}', context.fs.venv)
 
