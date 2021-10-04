@@ -350,7 +350,10 @@ def check() -> None:
 @command
 def test() -> None:
   """run tests while also determining coverage"""
-  context.exec('pytest', '--cov=deface')
+  command = ['pytest', '--cov=deface']
+  if context.logger.is_verbose:
+    command.append('-vv')
+  context.exec(*command)
 
 @command
 def document() -> None:
