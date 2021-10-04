@@ -15,12 +15,20 @@
 from deface.serde import dumps, loads, restore_utf8
 
 def test_restore_from_mojibake():
-  text = restore_utf8(
-    b'Instagram Post by Ro\\u00cc\\u0081isi\\u00cc\\u0081n Murphy '
-    b'\\u00e2\\u0080\\u00a2 May  6, 2020 at 05:42AM EDT'
-  ).decode('utf8')
+  assert restore_utf8(
+    rb'Instagram Post by Ro\u00cc\u0081isi\u00cc\u0081n Murphy '
+    rb'\u00e2\u0080\u00a2 May  6, 2020 at 05:42AM EDT'
+  ).decode('utf8') == 'Instagram Post by Róisín Murphy • May  6, 2020 at 05:42AM EDT'
 
-  assert text == 'Instagram Post by Róisín Murphy • May  6, 2020 at 05:42AM EDT'
+  assert restore_utf8(
+    rb'Yay Cyrillic: \u00d0\u009d\u00d0\u00b5\u00d1\u0082!'
+  ).decode('utf8') == 'Yay Cyrillic: Нет!'
+
+  # An additional backslash turns a unicode escape into the text of a unicode escape.
+  assert restore_utf8(
+    rb"sequences such as '\\u00e2\\u009c\\u0094\\u00ef\\u00b8\\u008f'"
+  ).decode('utf8') == r"sequences such as '\\u00e2\\u009c\\u0094\\u00ef\\u00b8\\u008f'"
+
 
 def test_loads_dumps():
   json = loads(b'{"answer": 42}')

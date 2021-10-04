@@ -30,7 +30,7 @@ __all__ = [
 
 JsonT = Union[None, bool, int, float, str, list[Any], dict[str, Any]]
 
-_BROKEN_ESCAPE = re.compile(rb'\\u00([0-9a-f][0-9a-f])', re.I)
+_BROKEN_ESCAPE = re.compile(rb'(?<!\\)\\u00([0-9a-f][0-9a-f])', re.I)
 
 def restore_utf8(data: bytes) -> bytes:
   """
