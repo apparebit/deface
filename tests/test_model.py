@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
+
+from deface.error import MergeError
 from deface.model import (
   Comment, ExternalContext, Location, Media, MediaType, Post
 )
@@ -55,3 +58,65 @@ def test_json():
   json_text = dumps(post1).encode('utf8')
   post2 = Post.from_dict(loads(json_text))
   assert post1 == post2
+
+def test_merge_media() -> None:
+  media1 = Media(
+    comments=tuple(),
+    media_type=MediaType.PHOTO,
+    upload_ip='192.168.1.1',
+    uri='somewhere.jpg',
+    description="a picture",
+    upload_timestamp=665,
+  )
+
+  media2 = Media(
+    comments=tuple(),
+    media_type=MediaType.PHOTO,
+    upload_ip='192.168.1.1',
+    uri='somewhere.jpg',
+    description="a picture",
+    upload_timestamp=665,
+  )
+
+  media3 = Media(
+    comments=tuple([
+      Comment(author='Alice', comment='wow', timestamp=1999),
+    ]),
+    media_type=MediaType.PHOTO,
+    upload_ip='192.168.1.1',
+    uri='somewhere.jpg',
+    description="a picture",
+    upload_timestamp=665,
+  )
+
+  media4 = Media(
+    comments=tuple([
+      Comment(author='Alice', comment='wow', timestamp=1999),
+      Comment(author='Bob', comment='meh', timestamp=2000),
+    ]),
+    media_type=MediaType.PHOTO,
+    upload_ip='192.168.1.1',
+    uri='somewhere.jpg',
+    description="a picture",
+    upload_timestamp=665,
+  )
+
+  assert media1.is_mergeable_with(media1)
+  assert media1.is_mergeable_with(media2)
+  assert media1.is_mergeable_with(media3)
+  assert media1.is_mergeable_with(media4)
+
+  assert media2.is_mergeable_with(media2)
+  assert media2.is_mergeable_with(media3)
+  assert media2.is_mergeable_with(media4)
+
+  assert media3.is_mergeable_with(media3)
+  assert not media3.is_mergeable_with(media4)
+
+  assert media1.merge(media2) == media1
+  assert media1.merge(media3) == media3
+  assert media3.merge(media1) == media3
+
+  with pytest.raises(MergeError) as x:
+    media3.merge(media4)
+  assert x.value.args[0].startswith('Unable to merge media descriptors')

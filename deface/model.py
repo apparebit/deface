@@ -313,24 +313,10 @@ class MediaMetaData:
 class Media:
   """A posted photo or video."""
 
-  comments: tuple[Comment, ...]
-  """Comments specifically on the photo or video."""
-
   media_type: MediaType
   """
   The media type, which is derived from the metadata key in the original
   data.
-  """
-
-  upload_ip: str
-  """
-  The IP address from which the photo or video was uploaded from. In the
-  original Facebook post data, this attribute is part of the  ``photo_metadata``
-  or ``video_metadata`` object nested inside the media object's
-  ``media_metadata``. It also is the only attribute reliably included with that
-  object. However, since ``upload_ip`` really is part of Facebook's data on the
-  use of the photo or video, it is hoisted into the media record during
-  ingestion.
   """
 
   uri: str
@@ -343,13 +329,6 @@ class Media:
   the personal data archive.
   """
 
-  creation_timestamp: Optional[int] = None
-  """
-  Seemingly the timestamp for when the media object was created *on Facebook*.
-  In the original Facebook, this timestamp differs from the post's timestamp by
-  less than 30 seconds.
-  """
-
   description: Optional[str] = None
   """
   A description of the photo or video. In the original Facebook post data, the
@@ -359,8 +338,12 @@ class Media:
   on a media record is unique to that photo or video.
   """
 
-  metadata: Optional[MediaMetaData] = None
-  """The metadata for the photo or video."""
+  title: Optional[str] = None
+  """
+  The title for the photo or video. This field is filled in automatically and
+  hence generic. Common variations are ``Mobile Uploads`` or ``Timeline Photos``
+  for photos and the empty string for videos.
+  """
 
   thumbnail: Optional[str] = None
   """
@@ -370,11 +353,14 @@ class Media:
   should be resolved from the root of the personal data archive.
   """
 
-  title: Optional[str] = None
+  metadata: Optional[MediaMetaData] = None
+  """The metadata for the photo or video."""
+
+  creation_timestamp: Optional[int] = None
   """
-  The title for the photo or video. This field is filled in automatically and
-  hence generic. Common variations are ``Mobile Uploads`` or ``Timeline Photos``
-  for photos and the empty string for videos.
+  Seemingly the timestamp for when the media object was created *on Facebook*.
+  In the original Facebook, this timestamp differs from the post's timestamp by
+  less than 30 seconds.
   """
 
   upload_timestamp: Optional[int] = None
@@ -385,6 +371,61 @@ class Media:
   However, since it really is part of Facebook's data on the use of the photo or
   video, it is hoisted into the media record during ingestion.
   """
+
+  upload_ip: str = ''
+  """
+  The IP address from which the photo or video was uploaded from. In the
+  original Facebook post data, this attribute is part of the  ``photo_metadata``
+  or ``video_metadata`` object nested inside the media object's
+  ``media_metadata``. It also is the only attribute reliably included with that
+  object. However, since ``upload_ip`` really is part of Facebook's data on the
+  use of the photo or video, it is hoisted into the media record during
+  ingestion.
+  """
+
+  comments: tuple[Comment, ...] = dataclasses.field(default_factory=tuple)
+  """Comments specifically on the photo or video."""
+
+  def is_mergeable_with(self, other: Media) -> bool:
+    """
+    Determine whether this media object can be merged with the other media
+    object. That is the case if both media objects have the same field values
+    with exception of comments, which may be omitted from one of the two media
+    objects.
+    """
+    return (
+      self.media_type == other.media_type
+      and self.upload_ip == other.upload_ip
+      and self.uri == other.uri
+      and self.creation_timestamp == other.creation_timestamp
+      and self.description == other.description
+      and self.metadata == other.metadata
+      and self.thumbnail == other.thumbnail
+      and self.title == other.title
+      and self.upload_timestamp == other.upload_timestamp
+      and (
+        self.comments == other.comments
+        or (len(self.comments) > 0 and len(other.comments) == 0)
+        or (len(self.comments) == 0 and len(other.comments) > 0)
+      )
+    )
+
+  def merge(self, other: Media) -> Media:
+    """
+    Merge this media object with the other media object.
+
+    :raises MergeError: indicates that the two media objects are not mergeable.
+    """
+    if self == other:
+      return self
+    elif not self.is_mergeable_with(other):
+      raise MergeError('Unable to merge media descriptors', self, other)
+    elif self.comments and not other.comments:
+      return self
+    elif not self.comments and other.comments:
+      return other
+    else:
+      assert False
 
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Media:
@@ -406,29 +447,6 @@ class Media:
 class Post:
   """A post on Facebook."""
 
-  media: tuple[Media, ...]
-  """
-  The photos and videos attached to a post.
-  """
-
-  places: tuple[Location, ...]
-  """
-  The places for this post. Almost all posts have at most one
-  :py:class:`deface.model.Location`. Occasionally, a post has two locations that
-  share the same address, latitude, longitude, and name but differ on
-  :py:attr:`deface.model.Location.url`, with one location having ``None`` and
-  the other having some value. In that case,
-  :py:func:`deface.ingest.ingest_post` eliminates the redundant location object
-  while keeping ``url``'s value. Posts with two or more distinct locations seem
-  rare but do occur.
-  """
-
-  tags: tuple[str, ...]
-  """The tags for a post, including friends and pages."""
-
-  text: tuple[str, ...]
-  """The text introducing a shared memory."""
-
   timestamp: int
   """
   The time a post was made in seconds since the beginning of the Unix epoch on
@@ -438,17 +456,18 @@ class Post:
   backdated_timestamp: Optional[int] = None
   """A backdated timestamp. Its semantics are unclear."""
 
-  event: Optional[Event] = None
-  """The event this post is about."""
-
-  external_context: Optional[ExternalContext] = None
-  """An external context, typically with URL only."""
-
-  name: Optional[str] = None
-  """The name for a recommendations."""
+  update_timestamp: Optional[int] = None
+  """
+  Nominally, the time of an update. In practice, if a post includes this field,
+  its value appears to be the same as that of ``timestamp``. In other words, the
+  field has devolved to a flag indicating whether a post was updated.
+  """
 
   post: Optional[str] = None
   """The post's textual body."""
+
+  name: Optional[str] = None
+  """The name for a recommendations."""
 
   title: Optional[str] = None
   """
@@ -463,11 +482,33 @@ class Post:
   * ``Alice was with Bob.``
   """
 
-  update_timestamp: Optional[int] = None
+  text: tuple[str, ...] = dataclasses.field(default_factory=tuple)
+  """The text introducing a shared memory."""
+
+  external_context: Optional[ExternalContext] = None
+  """An external context, typically with URL only."""
+
+  event: Optional[Event] = None
+  """The event this post is about."""
+
+  places: tuple[Location, ...] = dataclasses.field(default_factory=tuple)
   """
-  Nominally, the time of an update. In practice, if a post includes this field,
-  its value appears to be the same as that of ``timestamp``. In other words, the
-  field has devolved to a flag indicating whether a post was updated.
+  The places for this post. Almost all posts have at most one
+  :py:class:`deface.model.Location`. Occasionally, a post has two locations that
+  share the same address, latitude, longitude, and name but differ on
+  :py:attr:`deface.model.Location.url`, with one location having ``None`` and
+  the other having some value. In that case,
+  :py:func:`deface.ingest.ingest_post` eliminates the redundant location object
+  while keeping ``url``'s value. Posts with two or more distinct locations seem
+  rare but do occur.
+  """
+
+  tags: tuple[str, ...] = dataclasses.field(default_factory=tuple)
+  """The tags for a post, including friends and pages."""
+
+  media: tuple[Media, ...] = dataclasses.field(default_factory=tuple)
+  """
+  The photos and videos attached to a post.
   """
 
   def is_simultaneous(self, other: Post) -> bool:
@@ -515,13 +556,14 @@ class Post:
         return
 
       previous = by_uri[media.uri]
-      if previous != media:
+      if not previous.is_mergeable_with(media):
         raise MergeError(
           'Unable to merge posts with different media descriptors'
           ' for the same photo/video',
           self,
           other,
         )
+      by_uri[media.uri] = previous.merge(media)
 
     for media in self.media:
       collect(media)
