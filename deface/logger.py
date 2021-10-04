@@ -57,6 +57,8 @@ class Logger:
 
   def print(self, text: str = '') -> None:
     """Log the given text followed by a newline."""
+    if len(text) > 5_000:
+      text = text[:5_000] + '...'
     self._line_count += text.count('\n') + 1
     text = self._prefix + text.replace('\n', '\n' + self._prefix) + '\n'
     self._stream.write(text)
@@ -81,13 +83,14 @@ class Logger:
     self.print(self._sgr('31;1') + text + self._sgr('39;22'))
 
   def _print_entry(
-    self, level: Level, err: Union[str, Exception], *extras: Any
+    self, level: Level, err: Union[str, BaseException], *extras: Any
   ) -> None:
     starting_line = self._line_count
 
-    args = (err.args if isinstance(err, Exception) else (err,)) + extras
+    args = (err.args if isinstance(err, BaseException) else (err,)) + extras
     for index, arg in enumerate(args):
-      if isinstance(arg, str):
+      if isinstance(arg, (bytes, str)):
+        arg = str(arg)
         if index == 0:
           if self._use_emoji:
             arg = level.value + arg
@@ -112,6 +115,11 @@ class Logger:
     """
     self._error_count += 1
     self._print_entry(Level.ERROR, err, *extras)
+
+  @property
+  def warning_count(self) -> int:
+    """The number of warnings reported with :py:meth:`warn` so far."""
+    return self._warn_count
 
   def warn(self, warning: Union[str, Warning], *extras: Any) -> None:
     """
