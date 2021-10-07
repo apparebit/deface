@@ -202,8 +202,7 @@ class VEnv:
   def load_config(self) -> dict[str, str]:
     """Parse a virtual environment's configuration."""
     with open(self.prefix / VEnv.CONFIG, encoding='utf8') as file:
-      lines = file.read().splitlines()
-    pairs = [VEnv.SEP.split(l) for l in lines if l.strip()]
+      pairs = [l.split('=', maxsplit=1) for l in file if '=' in l]
     return { k.strip(): v.strip() for [k, v] in pairs}
 
   def validate_as_venv(self) -> Optional[dict[str, str]]:
