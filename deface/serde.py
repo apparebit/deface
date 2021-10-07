@@ -30,18 +30,35 @@ __all__ = [
 
 JsonT = Union[None, bool, int, float, str, list[Any], dict[str, Any]]
 
-_BROKEN_ESCAPE = re.compile(rb'(?<!\\)\\u00([0-9a-f][0-9a-f])', re.I)
+_ACTUAL_ESCAPE = re.compile(rb'''
+  (?<!\\)                    # No leading backslash,
+  ((\\\\)*)                  # followed by an even number of backslashes,
+  \\u00([0-9a-f][0-9a-f])    # followed by a unicode escape.
+  ''',
+  re.VERBOSE | re.IGNORECASE
+)
 
 def restore_utf8(data: bytes) -> bytes:
   """
   Restore the UTF-8 encoding for files exported from Facebook. Such files may
   appear to be valid JSON at first but nonetheless encode all non-ASCII
   characters incorrectly. Notably, what should just be UTF-8 byte values are
-  Unicode escape sequences of the form ``\\u00xx``. This function undoes the
-  damage. It should be invoked on the bytes of the raw JSON text, before
-  parsing.
+  Unicode escape sequences of the form ``\\u00xx``. This function replaces such
+  sequences with the byte value given by the last two hexadecimal digits. It
+  leaves all other escape sequences in place.
+
+  NB: If an arbitrary but *odd* number of backslashes precedes ``u00xx``, the
+  final backslash together with the ``u00xx`` forms a unicode escape sequence.
+  However, if an *even* number of backslashes precedes ``u00xx``, there is *no*
+  unicode escape sequence but text discussing unicode escape sequences.
+
+  This function should be invoked on the bytes of JSON text, before parsing.
   """
-  return re.sub(_BROKEN_ESCAPE, lambda match: unhexlify(match.group(1)), data)
+  return re.sub(
+    _ACTUAL_ESCAPE,
+    lambda match: match.group(1) + unhexlify(match.group(3)),
+    data
+  )
 
 def loads(data: bytes, **kwargs: Any) -> JsonT:
   """

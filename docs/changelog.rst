@@ -1,14 +1,16 @@
 Changelog
 =========
 
-**0.8.0** (XXX October, 2021)
-  * Support older version of the posts file, which do not contain an array of
-    posts but an object whose ``status_updates`` field is that array (*new feature*)
+**0.8.0** (6 October, 2021)
+  * Support older version of posts file, which does not contain an array of posts
+    but an object whose ``status_updates`` field is that array (*new feature*)
   * Make media objects mergeable if they differ only in one not having comments
     (*new feature*)
   * Tolerate repeated ``event``, ``external_context``, and ``name`` fields if they
     have the same value (*new feature*)
-  * Don't unescape the text of unicode escapes starting with two slashes (*bug fix*)
+  * Don't unescape ``\u00xx`` if preceded by an uneven number of backslashes; it is
+    not an instance of Facebook's broken encoding but rather of text discussing the
+    broken encoding on Facebook (*bug fix*)
   * Simplify code in ``run.py`` (*code quality*)
 
 **0.7.0** (21 September, 2021)
