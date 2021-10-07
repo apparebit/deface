@@ -1,7 +1,7 @@
 Changelog
 =========
 
-**0.8.0** (6 October, 2021)
+**0.8.0** (7 October, 2021)
   * Support older version of posts file, which does not contain an array of posts
     but an object whose ``status_updates`` field is that array (*new feature*)
   * Make media objects mergeable if they differ only in one not having comments
