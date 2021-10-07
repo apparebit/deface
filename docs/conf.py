@@ -19,6 +19,8 @@ sys.path.insert(1, os.path.abspath('sphinx_extensions'))
 
 import deface
 
+# sphinx.ext.linkcode generates links to source code and defers to an inscope
+# linkcode_resolve() for producing actual URLs. Let's create that function.
 from github_link import make_linkcode_resolve  # type: ignore
 linkcode_resolve = make_linkcode_resolve('apparebit', 'deface')  # type: ignore
 
