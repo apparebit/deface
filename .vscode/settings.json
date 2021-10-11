@@ -11,5 +11,8 @@
     "tomli",
     "unhexlify"
   ],
-  "editor.rulers": [ 88 ]
+  "editor.rulers": [
+    88
+  ],
+  "python.pythonPath": ".venv/bin/python"
 }
