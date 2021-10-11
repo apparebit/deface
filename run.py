@@ -36,9 +36,10 @@ class Context:
     self.fs = fs
     self.venv = venv
     self._exec_env: dict[str, str] = {
-      'PATH': os.environ['PATH'],
-      'TERM': os.environ['TERM'],
-      'VIRTUAL_ENV': sys.prefix,
+      'HOME': os.environ['HOME'], # Needed by git
+      'PATH': os.environ['PATH'], # To be prefixed with venv binary directory
+      'TERM': os.environ['TERM'], # Needed for colorful output
+      'VIRTUAL_ENV': sys.prefix,  # To activate venv
     }
 
   def activate_venv(self, path: Path) -> None:
@@ -324,14 +325,14 @@ def bootstrap() -> None:
   context.venv.bootstrap()
 
 @command
+def run(*args: Union[str, Path]) -> None:
+  """run arbitrary command"""
+  context.exec(*args)
+
+@command
 def python(*args: Union[str, Path]) -> None:
   """invoke Python on arguments in virtual environment"""
   context.exec('python3', *args)
-
-@command
-def deface(*args: Union[str, Path]) -> None:
-  """Run deface with the given arguments"""
-  context.exec('python3', '-m', 'deface', *args)
 
 @command
 def clean() -> None:
