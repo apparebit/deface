@@ -1,6 +1,13 @@
 Changelog
 =========
 
+**0.9.0** (xx October, 2021)
+  * Refactor non-model code from :py:mod:`deface.model` into :py:mod:`deface.ingest`
+    (*code quality*)
+  * Add ``HOME`` to subprocess environment in ``run.py`` so that git finds
+    configuration (*bug fix*)
+  * Replace ``deface`` command with more general ``run`` in ``run.py`` (*tooling*)
+
 **0.8.0** (7 October, 2021)
   * Support older version of posts file, which does not contain an array of posts
     but an object whose ``status_updates`` field is that array (*new feature*)
