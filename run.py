@@ -340,7 +340,6 @@ def clean() -> None:
   fs = context.fs
   fs.delete_directory(fs.dist)
   fs.delete_directory(fs.docs / '_build')
-  fs.make_directory(fs.docs / '_build')
 
 @command
 def check() -> None:
@@ -359,6 +358,8 @@ def test() -> None:
 def document() -> None:
   """build documentation"""
   fs = context.fs
+  # Sphinx automatically creates _build but warns (in red) that _static doesn't exist.
+  fs.make_directory(fs.docs / '_static')
   context.exec('sphinx-build', '-M', 'html', fs.docs, fs.docs / '_build')
   fs.open_in_app(fs.docs / '_build' / 'html' / 'index.html')
 
