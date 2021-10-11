@@ -3,16 +3,18 @@ Deface
 
 *Liberate your posts from Facebook!*
 
-*deface* ingests one or more ``posts/your_posts_n.json`` files exported from
-Facebook, cleans and simplifies the contained post data, including removing
-redundant information, and prints the result in chronological order to the
-console. You have a choice between pretty-printed, newline-delimited, or plain
-JSON for output.
+*deface* ingests one or more ``posts/your_posts_n.json`` files exported through
+Facebook's `Download Your Information <https://www.facebook.com/dyi>`_ page,
+fixes the broken character encoding, removes duplicated fields, converts to a
+more compact and well-defined schema, and prints the result in chronological
+order to the console. You have a choice between pretty-printed,
+newline-delimited, or plain JSON for output.
 
-By helping to extricate your content from Facebook, *deface* also helps to
-extricate yourself from the social network. That matters because Facebook is an
-imminent threat to human rights and democracy all over the world. I made just
-that case in `an invited talk <https://youtu.be/iYJQSfQGDEE>`_ at `Rebase
+By helping to extricate your content from Facebook, *deface* helps you to
+permanently extricate yourself from the social network. That matters because
+Facebook is an imminent threat to human rights and democracy all over the world.
+I made just that case in `an invited talk <https://youtu.be/iYJQSfQGDEE>`_ at
+`Rebase
 <http://rebase-conf.org/2020/#technology-today-a-paucity-of-integrity-and-imagination>`_
 / `SPLASH <https://2020.splashcon.org>`_ in November 2020.
 
