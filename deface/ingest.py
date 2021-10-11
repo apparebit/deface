@@ -25,7 +25,6 @@ from deface.model import (
   MediaType,
   MediaMetaData,
   Post,
-  PostHistory
 )
 from deface.validator import Validator
 
@@ -358,21 +357,103 @@ def ingest_post(data: Validator[Any]) -> Post:
 
   return Post(**fields)
 
-def ingest_into_history(
-  data: Validator[Any], history: PostHistory
-) -> list[DefaceError]:
+# ------------------------------------------------------------------------------
+
+class PostHistory:
   """
-  Ingest the JSON data value wrapped by the validator as list of posts into the
-  given history. This function returns a list of ingestion errors.
+  A history of posts. Use :py:meth:`ingest` to do just that for the wrapped post
+  data. The implementation, in turn, uses :py:meth:`add` to add posts one-by-one
+  as they are ingested. This class organizes posts by :py:attr:`Post.timestamp`.
+  That lets it easily merge posts that only differ in media as well as eliminate
+  duplicate posts. The latter is particularly important when ingesting posts
+  from more than one personal data archive, since archives may just overlap in
+  time. Once all posts have been added to the history, :py:meth:`timeline`
+  returns a list of all unique posts sorted by ``timestamp``.
   """
-  errors: list[DefaceError] = []
-  for item_data in data.to_list().items():
-    try:
-      post = ingest_post(item_data)
-      history.add(post)
-    except MergeError as err:
-      errors.append(err)
-    except ValidationError as err:
-      err.args = err.args + (item_data.value,)
-      errors.append(err)
-  return errors
+  def __init__(self) -> None:
+    self._posts: dict[int, Union[Post, list[Post]]] = dict()
+
+  def ingest(self, data: Validator[Any]) -> list[DefaceError]:
+    """
+    Ingest the JSON data value wrapped by the validator as a list of posts into
+    this history and return a list of errors detected during ingestion.
+    """
+    errors: list[DefaceError] = []
+    for item_data in data.to_list().items():
+      try:
+        post = ingest_post(item_data)
+        self.add(post)
+      except MergeError as err:
+        errors.append(err)
+      except ValidationError as err:
+        err.args = err.args + (item_data.value,)
+        errors.append(err)
+    return errors
+
+  def add(self, post: Post) -> None:
+    """
+    Add the post to the history of posts. If the history already includes one or
+    more posts with the same timestamp, this method tries merging the given post
+    with each of those posts and replaces the post upon a successful merge.
+    Otherwise, this method adds the post to the history.
+    """
+    timestamp = post.timestamp
+    if timestamp not in self._posts:
+      # No prior post with same timestamp.
+      self._posts[timestamp] = post
+      return
+
+    already_recorded = self._posts[timestamp]
+    if isinstance(already_recorded, Post):
+      # One prior post with same timestamp.
+      if already_recorded.is_mergeable_with(post):
+        self._posts[timestamp] = already_recorded.merge(post)
+      else:
+        self._posts[timestamp] = [already_recorded, post]
+      return
+
+    # Several prior posts with same timestamp.
+    for index, other in enumerate(already_recorded):
+      if other.is_mergeable_with(post):
+        already_recorded[index] = other.merge(post)
+        return
+    already_recorded.append(post)
+
+  def timeline(self) -> list[Post]:
+    """
+    Get a timeline for the history of posts. The timeline includes all posts
+    from the history in chronological order.
+    """
+    posts: list[Post] = []
+    for value in self._posts.values():
+      if isinstance(value, Post):
+        posts.append(value)
+      else:
+        posts.extend(value)
+    posts.sort(key=lambda p: p.timestamp)
+    return posts
+
+
+def find_simultaneous_posts(timeline: list[Post]) -> list[range]:
+  """
+  Find all simultaneous posts on the given timeline and return the ranges of
+  their indexes.
+  """
+  simultaneous_posts: list[range] = []
+
+  index = 0
+  length = len(timeline)
+  while index < length:
+    # Start with current index.
+    start = index
+    post = timeline[index]
+    # Scan for subsequent simultaneous posts.
+    while index + 1 < length and post.is_simultaneous(timeline[index + 1]):
+      index += 1
+    # Jot down the range if there were simultaneous posts.
+    if start != index:
+      simultaneous_posts.append(range(start, index + 1))
+    # Make sure next iteration looks at subsequent post.
+    index += 1
+
+  return simultaneous_posts

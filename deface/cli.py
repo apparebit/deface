@@ -18,9 +18,8 @@ from typing import Any
 
 from deface import __version__
 from deface.serde import dumps, loads
-from deface.ingest import ingest_into_history
+from deface.ingest import find_simultaneous_posts, PostHistory
 from deface.logger import Logger, pluralize
-from deface.model import PostHistory, find_simultaneous_posts
 from deface.validator import Validator
 
 __all__ = ['create_parser', 'main']
@@ -109,7 +108,7 @@ def main() -> None:
       ingested += len(json_data)
 
     wrapped_data = Validator[Any](json_data, filename=filename)
-    errors = ingest_into_history(wrapped_data, history)
+    errors = history.ingest(wrapped_data)
     erroneous += len(errors)
     for err in errors:
       logger.error(err)

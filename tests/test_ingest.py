@@ -18,9 +18,9 @@ from typing import Any
 
 from deface.error import DefaceError
 from deface.model import (
-  ExternalContext, Location, MediaMetaData, MediaType, PostHistory
+  ExternalContext, Location, MediaMetaData, MediaType
 )
-from deface.ingest import ingest_into_history, ingest_post
+from deface.ingest import ingest_post, PostHistory
 from deface.validator import Validator
 
 def test_ingest_post():
@@ -594,10 +594,7 @@ def test_ingest_many_posts():
   ]
 
   history = PostHistory()
-  errors = ingest_into_history(
-    Validator[Any](input, filename='history'),
-    history
-  )
+  errors = history.ingest(Validator[Any](input, filename='history'))
   assert len(errors) == 0
   timeline = history.timeline()
   assert len(timeline) == 5
