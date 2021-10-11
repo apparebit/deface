@@ -13,14 +13,12 @@
 # limitations under the License.
 
 """
-The data model for posts. This module defines the *deface*'s own post schema,
-which captures all Facebook post data in a much simpler fashion. The main type
-is the :py:class:`Post` dataclass. It depends on the :py:class:`Comment`,
+The data model for posts. This module defines *deface*'s own post schema, which
+captures all Facebook post data in a much simpler fashion. The main type is the
+:py:class:`Post` dataclass. It depends on the :py:class:`Comment`,
 :py:class:`Event`, :py:class:`ExternalContext`, :py:class:`Location`,
 :py:class:`Media`, and :py:class:`MediaMetaData` dataclasses as well as the
-:py:class:`MediaType` enumeration. This module also defines the
-:py:class:`PostHistory` and :py:func:`find_simultaneous_posts` helpers for
-building up a coherent timeline from Facebook post data.
+:py:class:`MediaType` enumeration.
 
 The schema uses Python tuples instead of lists because the former are immutable
 and thus do not get in the way of all model classes being both equatable and
@@ -32,8 +30,8 @@ dataclass instance becoming an object in the JSON text that has the same fields
 ``()`` as its value, :py:func:`deface.serde.prepare` removes it from the JSON
 representation. Since the schema needs to capture all information contained in
 Facebook post data, it includes a relatively large number of optional
-attributes. Including them in the serialized representation seems to have little
-benefit while cluttering the JSON text.
+attributes. Including them in the serialized representation would offer little
+benefit while also cluttering the JSON text.
 
 The model can easily be reinstated from its JSON text post-by-post by passing
 the deserialized dictionary to :py:meth:`Post.from_dict`. The method patches the
@@ -47,7 +45,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from deface.error import MergeError
 
 
