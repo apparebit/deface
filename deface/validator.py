@@ -17,38 +17,53 @@ from __future__ import annotations
 import json
 
 from collections.abc import Iterator, KeysView
-from typing import Any, cast, Generic, NoReturn, Optional, TypeVar, Union
+from typing import (
+  Any, cast, Generic, Mapping, NoReturn, Optional, overload, TypeVar, Union
+)
 from deface.error import ValidationError
 
-__all__ = ['KeyT', 'T', 'Validator']
+__all__ = ['Validator']
 
-KeyT = Union[int, str]
+KeyType = Union[int, str]
+ObjectType = Mapping[str, object]
+
 T = TypeVar('T')
+U = TypeVar('U')
 
 class Validator(Generic[T]):
+  """
+  Create a new validator instance for the given value. The validator for a JSON
+  document also takes the filename as argument. Validators for nested values
+  also take key and parent validator. The value, key, and parent observe this
+  equality:
+
+    parent._value[key] == value
+
+  Additionally, the key is an ``int``, if the parent value is a JSON array or
+  ``list``. It is a ``str``, if the parent value is a JSON object or
+  ``Mapping``. While the filename, key, and parent arguments are not strictly
+  necessary for validation, they do enable accurate error reporting, notably
+  through the :py:attr:`keypath`.
+  """
+  @overload
+  def __init__(self, value: T, *, filename: str) -> None: ...
+  @overload
+  def __init__(self, value: T, *, key: int, parent: Validator[list[T]]) -> None: ...
+  @overload
+  def __init__(self, value: T, *, key: str, parent: Validator[ObjectType]) -> None: ...
+
   def __init__(
     self,
     value: T,
+    *,
     filename: str = '',
-    key: Optional[KeyT] = None,
-    parent: Optional[Validator[T]] = None,
+    key: Optional[KeyType] = None,
+    parent: Optional[Validator[Any]] = None,
   ) -> None:
-    """
-    Create a new validator instance with the given key and value. When directly
-    creating the root validator for a JSON document, provide the ``value`` and
-    possibly ``filename`` as arguments. The latter improves error reporting.
-    When indirectly creating a new child validator through an indexing operator,
-    the ``parent`` and ``key`` can't be ``None``::
-
-      parent._value[key] == value
-
-    This equality holds for all derived validators but not for the root
-    validator (whose parent is itself).
-    """
     self._filename: str = parent._filename if parent is not None else filename
-    self._key: KeyT = key if key is not None else ''
+    self._key: KeyType = key if key is not None else ''
     self._value: T = value
-    self._parent: Validator[T] = parent if parent is not None else self
+    self._parent: Optional[Validator[Any]] = parent
 
   @property
   def filename(self) -> str:
@@ -75,14 +90,14 @@ class Validator(Generic[T]):
     like ``.answer`` for fields named with Python identifiers or like ``["42"]``
     otherwise.
     """
-    def format(key: KeyT) -> str:
+    def format(key: KeyType) -> str:
       if isinstance(key, str) and key.isidentifier():
         return f'.{key}'
       return f'[{json.dumps(key)}]'
 
     path: list[str] = []
-    current = self
-    while current != current._parent:
+    current: Optional[Validator[Any]] = self
+    while current._parent:
       path.append(format(current._key))
       current = current._parent
     path.reverse()
@@ -135,7 +150,7 @@ class Validator(Generic[T]):
       self.raise_invalid('is not a string')
     return cast(Validator[str], self)
 
-  def to_list(self) -> Validator[list[Any]]:
+  def to_list(self) -> Validator[list[object]]:
     """
     Coerce the current value to a list.
 
@@ -143,24 +158,24 @@ class Validator(Generic[T]):
     """
     if not isinstance(self._value, list):
       self.raise_invalid('is not a list')
-    return cast(Validator[list[Any]], self)
+    return cast(Validator[list[object]], self)
 
-  def items(self) -> Iterator[Validator[T]]:
+  def items(self: Validator[list[U]]) -> Iterator[Validator[U]]:
     """
     Get an iterator over the current list value's items. Each item is wrapped in
     the appropriate validator to continue validating the JSON data. If the
     current value is not a list, this method raises an assertion error.
     """
-    value: Any = self._value
+    value = self._value
     assert isinstance(value, list)
-    for index, item in enumerate(cast(list[Any], value)):
+    for index, item in enumerate(cast(list[U], value)):
       yield Validator(item, key=index, parent=self)
 
   def to_object(
     self,
     valid_keys: Optional[set[str]] = None,
     singleton: bool = False
-  ) -> Validator[dict[str,Any]]:
+  ) -> Validator[ObjectType]:
     """
     Coerce the current value to an object. If ``valid_keys`` are given, this
     method validates the object's fields against the given field names. If
@@ -171,16 +186,21 @@ class Validator(Generic[T]):
     """
     if not isinstance(self._value, dict):
       self.raise_invalid('is not an object')
-    keys = cast(dict[str,Any], self._value).keys()
+    keys = cast(ObjectType, self._value).keys()
     if singleton and len(keys) != 1:
       self.raise_invalid('is not an object with a single field')
     if valid_keys is not None:
       for key in keys:
         if key not in valid_keys:
           self.raise_invalid(f'contains unexpected field {key}')
-    return cast(Validator[dict[str,Any]], self)
+    return cast(Validator[ObjectType], self)
 
-  def __getitem__(self, key: KeyT) -> Validator[Any]:
+  @overload
+  def __getitem__(self: Validator[list[U]], key: int) -> Validator[U]: ...
+  @overload
+  def __getitem__(self: Validator[ObjectType], key: str) -> Validator[object]: ...
+
+  def __getitem__(self: Validator[T], key: KeyType) -> Validator[U]:
     """
     Index the current value with the given key to create a new child validator.
     The given key becomes the new validator's key and the result of the indexing
@@ -200,21 +220,20 @@ class Validator(Generic[T]):
     """
     value = self._value
     if isinstance(value, list):
-      list_value = cast(list[Any], value)
       if not isinstance(key, int):
         raise TypeError(f'Non-integer key "{key}" cannot index list')
       elif key < 0:
         raise IndexError(f'List index {key} is negative')
-      elif key >= len(list_value):
-        raise IndexError(f'List index {key} >= length {len(list_value)}')
+      elif key >= len(value):
+        raise IndexError(f'List index {key} >= length {len(value)}')
       else:
-        return Validator[Any](list_value[key], key=key, parent=self)
+        return Validator(value[key], key=key, parent=cast(Validator[list[U]], self))
     elif isinstance(value, dict):
       if not isinstance(key, str):
-        raise TypeError(f'Non-string key "{key}" cannot index dict')
+        raise TypeError(f'Non-string key "{key}" cannot index mapping')
       elif key not in value:
         self.raise_invalid(f'is missing required field {key}')
       else:
-        return Validator[Any](value[key], key=key, parent=self)
+        return Validator(value[key], key=key, parent=cast(Validator[ObjectType], self))
     else:
       raise TypeError(f'Scalar value "{value}" cannot be indexed')
