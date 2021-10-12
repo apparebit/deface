@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Ingestion of the original Facebook post data. This module provides code for
+validating that posts have the expected structure and types and to then convert
+them to *deface*'s own :py:mod:`deface.model`.
+"""
+
 import dataclasses
 from typing import Any, Optional, Union
 
@@ -35,7 +41,9 @@ __all__ = [
   'ingest_location',
   'ingest_external_context',
   'ingest_event',
-  'ingest_comment'
+  'ingest_comment',
+  'PostHistory',
+  'find_simultaneous_posts',
 ]
 
 _COMMENT_KEYS: set[str] = { 'author', 'comment', 'timestamp' }
@@ -363,12 +371,13 @@ class PostHistory:
   """
   A history of posts. Use :py:meth:`ingest` to do just that for the wrapped post
   data. The implementation, in turn, uses :py:meth:`add` to add posts one-by-one
-  as they are ingested. This class organizes posts by :py:attr:`Post.timestamp`.
-  That lets it easily merge posts that only differ in media as well as eliminate
-  duplicate posts. The latter is particularly important when ingesting posts
-  from more than one personal data archive, since archives may just overlap in
-  time. Once all posts have been added to the history, :py:meth:`timeline`
-  returns a list of all unique posts sorted by ``timestamp``.
+  as they are ingested. This class organizes posts by
+  :py:attr:`deface.model.Post.timestamp`. That lets it easily merge posts that
+  only differ in media as well as eliminate duplicate posts. The latter is
+  particularly important when ingesting posts from more than one personal data
+  archive, since archives may just overlap in time. Once all posts have been
+  added to the history, :py:meth:`timeline` returns a list of all unique posts
+  sorted by ``timestamp``.
   """
   def __init__(self) -> None:
     self._posts: dict[int, Union[Post, list[Post]]] = dict()
