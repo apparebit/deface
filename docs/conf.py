@@ -66,6 +66,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # Source order is nicer than alphabetizing fields and methods.
 autodoc_member_order = 'bysource'
 
+# Known types are linked, so the fully qualified name adds mostly noise.
+python_use_unqualified_type_names = True
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
