@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Errors specific to *deface*.
+"""
+
 __all__ = ['DefaceError', 'ValidationError', 'MergeError']
 
 class DefaceError(Exception):

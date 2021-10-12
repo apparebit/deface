@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+The command line interface to *deface*.
+"""
+
 from argparse import ArgumentParser, BooleanOptionalAction
 import sys
 from typing import Any

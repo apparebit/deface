@@ -12,23 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+JSON serialization and deserialization. This module concerns itself with parsing
+the original Facebook post data while also fixing its broken character encoding
+and with printing out the cleaned up post data again. Its :py:func:`loads` and
+:py:func:`dumps` functions leave most of the heavy lifting to the corresponding
+functions in Python's builtin ``json`` module. They simply pass keyword
+arguments through. The :py:func:`restore_utf8` and :py:func:`prepare` functions
+encapsulate the added functionality.
+"""
+
 import dataclasses
 import enum
 import json
 import re
 
 from binascii import unhexlify
-from typing import Any, Union
+from typing import Any, Mapping, Union
 
 __all__ = [
-  'JsonT',
   'restore_utf8',
   'loads',
   'prepare',
   'dumps'
 ]
 
-JsonT = Union[None, bool, int, float, str, list[Any], dict[str, Any]]
+JsonT = Union[None, bool, int, float, str, list[Any], Mapping[str, object]]
 
 _ACTUAL_ESCAPE = re.compile(rb'''
   (?<!\\)                    # No leading backslash,

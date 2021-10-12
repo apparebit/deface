@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Yet another console logger. This module implements a simple but colorful console
+logger.
+"""
+
 import enum
 import sys
 
