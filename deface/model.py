@@ -223,7 +223,7 @@ class Location:
   """
 
   url: Optional[str] = None
-  """"The URL for the location on `<https://www.facebook.com>`_."""
+  """The URL for the location on `<https://www.facebook.com>`_."""
 
   def is_mergeable_with(self, other: Location) -> bool:
     """
@@ -492,13 +492,12 @@ class Post:
   places: tuple[Location, ...] = dataclasses.field(default_factory=tuple)
   """
   The places for this post. Almost all posts have at most one
-  :py:class:`deface.model.Location`. Occasionally, a post has two locations that
-  share the same address, latitude, longitude, and name but differ on
-  :py:attr:`deface.model.Location.url`, with one location having ``None`` and
-  the other having some value. In that case,
-  :py:func:`deface.ingest.ingest_post` eliminates the redundant location object
-  while keeping ``url``'s value. Posts with two or more distinct locations seem
-  rare but do occur.
+  :py:class:`Location`. Occasionally, a post has two locations that share the
+  same address, latitude, longitude, and name but differ on
+  :py:attr:`Location.url`, with one location having ``None`` and the other
+  having some value. In that case, :py:func:`deface.ingest.ingest_post`
+  eliminates the redundant location object while keeping ``url``'s value. Posts
+  with two or more distinct locations seem rare but do occur.
   """
 
   tags: tuple[str, ...] = dataclasses.field(default_factory=tuple)
