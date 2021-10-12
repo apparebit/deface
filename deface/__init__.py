@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """Liberate your posts from Facebook"""
-__version__ = "0.8.0"
+__version__ = "0.9.0"
 
 __all__ = [
   'cli',
