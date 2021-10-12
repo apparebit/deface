@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 import re
 import shutil
-from subprocess import CompletedProcess, run as subprocess_run
+from subprocess import CalledProcessError, CompletedProcess, run as subprocess_run
 import sys
 import tempfile
 from typing import Any, Callable, Optional, TextIO, Union
@@ -214,8 +214,6 @@ class VEnv:
         return cfg
     except FileNotFoundError:
       pass
-    except Exception as x:
-      context.logger.error(f'error loading {self.prefix / VEnv.CONFIG}: {x.args[0]}')
     return None
 
   def check_active_venv(self) -> None:
@@ -342,9 +340,12 @@ def clean() -> None:
   fs.delete_directory(fs.docs / '_build')
 
 @command
-def check() -> None:
+def typecheck() -> None:
   """run static code inspections"""
-  context.exec('mypy', '--color-output')
+  command = ['mypy']
+  if context.logger.is_verbose:
+    command.append('--pretty')
+  context.exec(*command)
 
 @command
 def test() -> None:
@@ -373,7 +374,7 @@ def publish_docs() -> None:
   """update documentation on GitHub pages"""
   # Build documentation.
   clean()
-  check()
+  typecheck()
   test()
   document()
 
@@ -395,7 +396,7 @@ def publish_docs() -> None:
 def release() -> None:
   """release a new version"""
   clean()
-  check()
+  typecheck()
   test()
   document()
   context.exec('flit', 'publish')
@@ -486,11 +487,13 @@ def main() -> None:
     # Execute commands.
     for command_name in args.commands:
       commands[command_name](*args.extras)
+  except CalledProcessError as x:
+    logger.error(f'{command_name} returned exit code {x.args[0]}')
   except Exception as x:
-    import traceback
-    logger.error(f'{command_name} failed: {x.args[0]}')
+    logger.error(f'{command_name} failed: {x}')
     if logger.is_verbose:
       logger.trace('error traceback:')
+      import traceback
       traceback.print_tb(x.__traceback__, file=logger.stream)
 
 if __name__ == '__main__':
