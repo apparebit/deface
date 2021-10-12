@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Programmatic validation of JSON data. This module implements a wrapper class for
+traversing and validating parsed JSON data. The code using the wrapper invokes
+:py:meth:`Validator.to_integer`, :py:meth:`Validator.to_float`,
+:py:meth:`Validator.to_string`, :py:meth:`Validator.to_list`, and
+:py:meth:`Validator.to_object` to ensure that wrapped values have expected
+types, :py:meth:`Validator.items` to access list items, as well as
+:py:meth:`Validator.__getitem__` to access object properties. The wrapper class
+takes care of tracking the current keypath and precisely reporting any errors.
+"""
+
 from __future__ import annotations
 
 import json
