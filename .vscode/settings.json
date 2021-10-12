@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
     "deps",
+    "deserialization",
     "isatty",
     "mojibake",
     "println",
