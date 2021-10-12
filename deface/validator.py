@@ -108,7 +108,7 @@ class Validator(Generic[T]):
 
     path: list[str] = []
     current: Optional[Validator[Any]] = self
-    while current._parent:
+    while current and current._parent:
       path.append(format(current._key))
       current = current._parent
     path.reverse()
