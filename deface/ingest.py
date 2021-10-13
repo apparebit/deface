@@ -235,7 +235,8 @@ def ingest_media(data: Validator[Any]) -> Media:
     )
     fields['thumbnail'] = thumbnail_data['uri'].to_string().value
 
-  fields['title'] = media_data['title'].to_string().value
+  if 'title' in media_data.value:
+    fields['title'] = media_data['title'].to_string().value
   fields['uri'] = media_data['uri'].to_string().value
 
   return Media(**fields)
