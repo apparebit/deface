@@ -265,10 +265,12 @@ class VEnv:
     """install virtual environment and development dependencies"""
     logger = context.logger
     logger.announce(f"install venv '{self.prefix}'")
-    context.exec('python3', '-m', 'venv', self.prefix)
+    # Use current Python to seed virtual environment.
+    context.exec(sys.executable, '-m', 'venv', self.prefix)
     context.activate_venv(self.prefix)
     self.check_active_venv()
 
+    # This better be the same Python since venv has been activated.
     context.exec('python3', '-m', 'pip', 'install', '--upgrade', 'pip')
 
     dependencies = self.lookup_dependencies('dev', 'doc', 'test')
