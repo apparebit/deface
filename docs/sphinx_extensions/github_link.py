@@ -19,7 +19,7 @@ import os
 import subprocess
 import sys
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 # The code in this module is inspired by:
 # https://github.com/scikit-learn/scikit-learn/blob/main/doc/sphinxext/github_link.py
@@ -46,7 +46,7 @@ def _lookup_git_head() -> Optional[str]:
 
 def _linkcode_resolve(
   domain: str,
-  info: dict[str, str],
+  info: Dict[str, str],
   organization: str,
   project: str,
   revision: Optional[str]
