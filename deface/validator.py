@@ -25,21 +25,29 @@ takes care of tracking the current keypath and precisely reporting any errors.
 
 from __future__ import annotations
 
+import enum
 import json
-
-from collections.abc import Iterator, KeysView
 from typing import (
-  Any, cast, Generic, Mapping, NoReturn, Optional, overload, TypeVar, Union
+  Any, cast, Generic, Iterator, Mapping, NoReturn, Optional, overload, TypeVar, Union
 )
+
 from deface.error import ValidationError
 
-__all__ = ['Validator']
+__all__ = ['Sized', 'Validator']
 
 KeyType = Union[int, str]
 ObjectType = Mapping[str, object]
 
 T = TypeVar('T')
 U = TypeVar('U')
+
+
+class Sized(enum.Enum):
+  """A constraint on list size."""
+  ZERO_OR_MORE = enum.auto()
+  ONE_OR_MORE = enum.auto()
+  EXACTLY_ONE = enum.auto()
+
 
 class Validator(Generic[T]):
   """
@@ -89,7 +97,7 @@ class Validator(Generic[T]):
     """
     value = self._value
     assert isinstance(value, dict)
-    keys: KeysView[str] = value.keys()
+    keys = value.keys()
     assert len(keys) == 1
     return next(iter(keys))
 
@@ -161,7 +169,7 @@ class Validator(Generic[T]):
       self.raise_invalid('is not a string')
     return cast(Validator[str], self)
 
-  def to_list(self) -> Validator[list[object]]:
+  def to_list(self, sized: Sized = Sized.ONE_OR_MORE) -> Validator[list[object]]:
     """
     Coerce the current value to a list.
 
@@ -169,6 +177,10 @@ class Validator(Generic[T]):
     """
     if not isinstance(self._value, list):
       self.raise_invalid('is not a list')
+    elif sized == Sized.EXACTLY_ONE and len(self._value) != 1:
+      self.raise_invalid('is not a singleton list')
+    elif sized == Sized.ONE_OR_MORE and len(self._value) == 0:
+      self.raise_invalid('is the empty list')
     return cast(Validator[list[object]], self)
 
   def items(self: Validator[list[U]]) -> Iterator[Validator[U]]:
