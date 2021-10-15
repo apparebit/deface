@@ -94,8 +94,8 @@ def main() -> None:
   logger = Logger(prefix = '// ', use_color=args.color)
 
   # Iterate over files and collect posts.
-  ingested = 0
-  erroneous = 0
+  processed = 0
+  malformed = 0
 
   history = PostHistory()
   for filename in args.filenames:
@@ -109,25 +109,26 @@ def main() -> None:
     if isinstance(json_data, dict) and 'status_updates' in json_data:
       json_data = json_data['status_updates']
     if isinstance(json_data, list):
-      ingested += len(json_data)
+      processed += len(json_data)
 
     wrapped_data = Validator[Any](json_data, filename=filename)
     errors = history.ingest(wrapped_data)
-    erroneous += len(errors)
+    malformed += len(errors)
     for err in errors:
       logger.error(err)
 
   # Extract timeline.
   timeline = history.timeline()
-  timeline_length = len(timeline)
+  ingested = len(timeline)
 
   # Warn about multiple posts with the same timestamp. They do happen. But they
   # do happen so rarely that they deserve manual validation.
-  simultaneous_posts = find_simultaneous_posts(timeline)
-  simultaneous_count = 0
-  for timeline_range in simultaneous_posts:
+  simultaneous_times = 0
+  simultaneous_posts = 0
+  for timeline_range in find_simultaneous_posts(timeline):
     count = timeline_range.stop - timeline_range.start
-    simultaneous_count += count
+    simultaneous_times += 1
+    simultaneous_posts += count
     posts = [timeline[index] for index in timeline_range]
     logger.warn(
       f'There are {count} posts with timestamp {posts[0].timestamp}',
@@ -144,7 +145,7 @@ def main() -> None:
         sys.stdout.write(dumps(post))
       else:
         sys.stdout.write(dumps(post, indent=2))
-      if args.format != 'ndjson' and index < timeline_length - 1:
+      if args.format != 'ndjson' and index < ingested - 1:
         sys.stdout.write(',\n')
       else:
         sys.stdout.write('\n')
@@ -155,15 +156,13 @@ def main() -> None:
 
   # Sign off.
   filecount = len(args.filenames)
-  sign_off = (
-    f'Created {timeline_length} cleaned {pluralize(timeline_length, "post")} '
-    f'from {ingested} raw {pluralize(ingested, "post")} '
-  )
-  if erroneous > 0:
-    sign_off += f'including {erroneous} malformed {pluralize(erroneous, "one")} '
-  sign_off += f'from {filecount} input {pluralize(filecount, "file")}.'
-  warned = logger.warning_count
-  if warned:
-    sign_off += f'\nAlso warned {warned} {pluralize(warned, "time")} '
-    sign_off += f'about {simultaneous_count} posts'
-  logger.done(sign_off)
+  message = f'Processed {filecount:,} {pluralize(filecount, "file")} '
+  message += f'with {processed:,} {pluralize(processed, "raw post")}'
+  if malformed:
+    message += f', including {malformed:,} {pluralize(malformed, "malformed one")}'
+  message += f';\nyielded {ingested:,} {pluralize(ingested, "cleaned post")}'
+  if simultaneous_times:
+    message += f', including {simultaneous_posts} that share '
+    message += f'{simultaneous_times} timestamps with other posts'
+  message += '.'
+  logger.done(message)
