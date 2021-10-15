@@ -61,7 +61,10 @@ To find out more about supported commands and their options, please check out
    :title:
    :group_title_prefix:
 
-*See actual help message of* ``run.py`` *for description of commands.*
+.. tip::
+
+   Execute ``./run.py -h`` in your terminal to see the list of supported
+   commands and their (short) descriptions.
 
 ``run.py`` has commands for all development tasks from bootstrap to making a
 release. Yet it also has *no* external dependencies (beyond Python and pip) and
