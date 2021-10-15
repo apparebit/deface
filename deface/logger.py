@@ -33,9 +33,9 @@ def _sgr(_: str, code: str) -> str:
   return f'\x1b[{code}m'
 
 class Level(enum.Enum):
-  ERROR = '🛑 '
-  WARN = '⚠️ '
-  INFO = 'ℹ️ '
+  ERROR = '🛑  '
+  WARN = '⚠️  '
+  INFO = 'ℹ️  '
 
 class Logger:
   """
