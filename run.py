@@ -24,7 +24,7 @@ import shutil
 from subprocess import CalledProcessError, CompletedProcess, run as subprocess_run
 import sys
 import tempfile
-from typing import Any, Callable, Optional, TextIO, Union
+from typing import Any, Callable, Dict, List, Optional, Set, TextIO, Union
 
 # --------------------------------------------------------------------------------------
 # The Global Context for Namespacing All Utilities
@@ -35,10 +35,14 @@ class Context:
     self.logger = logger
     self.fs = fs
     self.venv = venv
-    self._exec_env: dict[str, str] = {
+    self._exec_env: Dict[str, str] = {
       'HOME': os.environ['HOME'], # Needed by git
+      'LANG': os.environ['LANG'],
+      'LOGNAME': os.environ['LOGNAME'],
       'PATH': os.environ['PATH'], # To be prefixed with venv binary directory
+      'SHELL': os.environ['SHELL'],
       'TERM': os.environ['TERM'], # Needed for colorful output
+      'TMPDIR': os.environ['TMPDIR'],
       'VIRTUAL_ENV': sys.prefix,  # To activate venv
     }
 
@@ -56,7 +60,9 @@ class Context:
     context.logger.trace(' '.join(cmd))
 
     # Merge environment variables, then spawn subprocess with command.
-    kwargs['env'] = self._exec_env | kwargs.get('env', {})
+    env = dict(self._exec_env)
+    env.update(kwargs.get('env', {}))
+    kwargs['env'] = env
     if 'capture_output' in kwargs and 'encoding' not in kwargs:
       kwargs['encoding'] = 'utf8'
     return subprocess_run(cmd, check=True, **kwargs)
@@ -152,7 +158,7 @@ class FS:
     context.logger.trace('delete directory {}', path)
     shutil.rmtree(path, ignore_errors=True)
 
-  def delete_contents(self, path: Path, excludes: set[str]) -> None:
+  def delete_contents(self, path: Path, excludes: Set[str]) -> None:
     """Delete all entries from the given directory."""
     context.logger.trace('delete directory contents {}', path)
     context.logger.trace('excluding {}', excludes)
@@ -200,13 +206,13 @@ class VEnv:
     """Test whether this Python is running within a PEP 405 virtual environment."""
     return sys.prefix != getattr(sys, 'base_prefix', sys.prefix)
 
-  def load_config(self) -> dict[str, str]:
+  def load_config(self) -> Dict[str, str]:
     """Parse a virtual environment's configuration."""
     with open(self.prefix / VEnv.CONFIG, encoding='utf8') as file:
       pairs = [l.split('=', maxsplit=1) for l in file if '=' in l]
     return { k.strip(): v.strip() for [k, v] in pairs}
 
-  def validate_as_venv(self) -> Optional[dict[str, str]]:
+  def validate_as_venv(self) -> Optional[Dict[str, str]]:
     """Validate given path as virtual environment, returning its configuration."""
     try:
       cfg = self.load_config()
@@ -228,7 +234,7 @@ class VEnv:
 
   def lookup_dependencies(
     self, *group_names: Union[_RUNTIME_DEPENDENCIES_TYPE, str]
-  ) -> list[str]:
+  ) -> List[str]:
     """Extract project's dependencies."""
     cfg_text = (self.project_root / VEnv.PYPROJECT).read_text('utf8')
     # Recent versions of pip include tomli, older versions include toml.
@@ -242,7 +248,7 @@ class VEnv:
     groups[RUNTIME] = project.get('dependencies', [])
     return [d for g in group_names for d in groups.get(g, [])]
 
-  def lookup_installed(self) -> dict[str, str]:
+  def lookup_installed(self) -> Dict[str, str]:
     """Determine all packages installed in the virtual environment."""
     import json
     pairs = json.loads(context.exec(
@@ -250,7 +256,7 @@ class VEnv:
     ).stdout)
     return { entry['name'].lower(): entry['version'] for entry in pairs }
 
-  def check_installed(self, packages: list[str]) -> None:
+  def check_installed(self, packages: List[str]) -> None:
     """Check that the dependencies are in fact installed"""
     installed = self.lookup_installed()
     missing = set(packages) - set(installed)
@@ -298,8 +304,8 @@ class VEnv:
 
 CommandT = Callable[..., None]
 
-special_commands: set[str] = set()
-commands: dict[str, Callable[..., None]] = {}
+special_commands: Set[str] = set()
+commands: Dict[str, Callable[..., None]] = {}
 
 def command(fn: CommandT) -> CommandT:
   """Turn a function into a command."""
@@ -410,7 +416,7 @@ def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
   # Prepare command descriptions
   width = len('--color, --no-color  ')
 
-  lines: list[str] = ['special commands (one per invocation):\n']
+  lines: List[str] = ['special commands (one per invocation):\n']
   for name, command in commands.items():
     if name in special_commands:
       lines.append('  ' + f'{name} ARG ...'.ljust(width) + f'{command.__doc__}\n')
@@ -429,9 +435,12 @@ def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
     formatter_class=argparse.RawDescriptionHelpFormatter,
   )
   parser.add_argument(
-    '--color',
-    action=argparse.BooleanOptionalAction, default=None,
-    help='enable / disable use of color in output'
+    '--color', action='store_true', dest='color',
+    help='force use of color'
+  )
+  parser.add_argument(
+    '--no-color', action='store_false', dest='color',
+    help='prevent use of color'
   )
   parser.add_argument(
     '-v', '--verbose',
@@ -441,12 +450,12 @@ def create_parser(*, with_commands: bool = True) -> argparse.ArgumentParser:
   if with_commands:
     parser.add_argument(
       'commands', metavar='COMMAND', nargs='+', choices=commands.keys(),
-      help='execute comand as described above'
+      help='execute comand as described below'
     )
   return parser
 
 def parse_arguments() -> argparse.Namespace:
-  result = argparse.Namespace(commands=[], extras=None)
+  result = argparse.Namespace(color=None, commands=[], extras=None)
   arguments = sys.argv[1:]
 
   # Handle special commands, which consume rest of arguments
