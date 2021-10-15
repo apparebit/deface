@@ -32,7 +32,7 @@ from deface.model import (
   MediaMetaData,
   Post,
 )
-from deface.validator import Validator
+from deface.validator import Sized, Validator
 
 __all__ = [
   'ingest_into_history',
@@ -123,6 +123,7 @@ _MEDIA_METADATA_KEYS: set[str] = {
   'exposure',
   'focal_length',
   'f_stop',
+  'iso',
   'iso_speed',
   'latitude',
   'longitude',
@@ -146,7 +147,8 @@ def ingest_metadata(
   """
   metadata = data.to_object(valid_keys=_MEDIA_METADATA_KEYS)
 
-  media_fields['upload_ip'] = metadata['upload_ip'].to_string().value
+  if 'upload_ip' in metadata.value:
+    media_fields['upload_ip'] = metadata['upload_ip'].to_string().value
   if 'upload_timestamp' in metadata.value:
     media_fields['upload_timestamp'] = (
       metadata['upload_timestamp'].to_integer().value
@@ -163,7 +165,9 @@ def ingest_metadata(
     fields['focal_length'] = metadata['focal_length'].to_string().value
   if 'f_stop' in metadata.value:
     fields['f_stop'] = metadata['f_stop'].to_string().value
-  if 'iso_speed' in metadata.value:
+  if 'iso' in metadata.value:
+    fields['iso_speed'] = metadata['iso'].to_integer().value
+  elif 'iso_speed' in metadata.value:
     fields['iso_speed'] = metadata['iso_speed'].to_integer().value
   if 'latitude' in metadata.value:
     fields['latitude'] = metadata['latitude'].to_float().value
@@ -216,18 +220,26 @@ def ingest_media(data: Validator[Any]) -> Media:
   if 'description' in media_data.value:
     fields['description'] = media_data['description'].to_string().value
 
-  metadata = media_data['media_metadata'].to_object(
-    valid_keys=_METADATA_KEYS, singleton=True
-  )
-  metadata_key = metadata.only_key
-  fields['media_type'] = (
-    MediaType.PHOTO
-    if metadata_key == 'photo_metadata'
-    else MediaType.VIDEO
-  )
-  media_metadata = ingest_metadata(metadata[metadata_key], fields)
-  if media_metadata is not None:
-    fields['metadata'] = media_metadata
+  uri = fields['uri'] = media_data['uri'].to_string().value
+
+  if 'media_metadata' in media_data.value:
+    metadata = media_data['media_metadata'].to_object(
+      valid_keys=_METADATA_KEYS, singleton=True
+    )
+    metadata_key = metadata.only_key
+    fields['media_type'] = (
+      MediaType.VIDEO if metadata_key == 'video_metadata' else MediaType.PHOTO
+    )
+    metadata = metadata[metadata_key].to_object()
+    if len(metadata.value) == 1 and 'exif_data' in metadata.value:
+      metadata = metadata['exif_data'].to_list(Sized.EXACTLY_ONE)[0].to_object()
+    media_metadata = ingest_metadata(metadata, fields)
+    if media_metadata is not None:
+      fields['metadata'] = media_metadata
+  else:
+    fields['media_type'] = (
+      MediaType.VIDEO if uri.endswith('.mp4') else MediaType.PHOTO
+    )
 
   if 'thumbnail' in media_data.value:
     thumbnail_data = media_data['thumbnail'].to_object(
@@ -237,7 +249,6 @@ def ingest_media(data: Validator[Any]) -> Media:
 
   if 'title' in media_data.value:
     fields['title'] = media_data['title'].to_string().value
-  fields['uri'] = media_data['uri'].to_string().value
 
   return Media(**fields)
 
@@ -261,7 +272,7 @@ def _handle_attachments(
   all_places: list[Location] = []
   all_text: list[str] = []
 
-  for outer_item in data.to_list().items():
+  for outer_item in data.to_list(Sized.ZERO_OR_MORE).items():
     outer_data = outer_item.to_object(valid_keys={'data'}, singleton=True)
     for inner_item in outer_data['data'].to_list().items():
       inner_data = inner_item.to_object(
@@ -323,7 +334,7 @@ def ingest_post(data: Validator[Any]) -> Post:
     all_text = list()
 
   if 'data' in post_data.value:
-    for item in post_data['data'].to_list().items():
+    for item in post_data['data'].to_list(Sized.ZERO_OR_MORE).items():
       item_data = item.to_object(valid_keys=_DATA_KEYS, singleton=True)
       key = item_data.only_key
       if key in fields:
