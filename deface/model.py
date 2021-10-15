@@ -45,7 +45,7 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from typing import Any, Optional
+from typing import Any, Optional, TypeVar
 from deface.error import MergeError
 
 
@@ -62,6 +62,30 @@ __all__ = [
   'find_simultaneous_posts'
 ]
 
+# --------------------------------------------------------------------------------------
+# Helper Functions for Merging Records
+
+def _are_equal_or_one_is_none(o1: object, o2: object) -> bool:
+  """Determine whether the two object are equal or one is ``None``."""
+  return (
+    o1 == o2 or (o1 is None and o2 is not None) or (o1 is not None and o2 is None)
+  )
+
+
+def _are_equal_or_one_is_empty(l1: tuple[T, ...], l2: tuple[T, ...]) -> bool:
+  """Determine whether the two tuples are equal or one is the empty tuple."""
+  return (
+    l1 == l2 or (len(l1) == 0 and len(l2) > 0) or (len(l1) > 0 and len(l2) == 0)
+  )
+
+
+T = TypeVar('T')
+
+def _if_not_none_or(o1: T, o2: T) -> T:
+  return o1 if o1 is not None else o2
+
+# --------------------------------------------------------------------------------------
+# The Model Classes
 
 class MediaType(enum.Enum):
   """
@@ -297,6 +321,35 @@ class MediaMetaData:
   original_width: Optional[int] = None
   taken_timestamp: Optional[int] = None
 
+  def is_mergeable_with(self, other: Optional[MediaMetaData]) -> bool:
+    if other is None:
+      return True
+
+    return (
+      self.camera_make == other.camera_make
+      and self.camera_model == other.camera_model
+      and self.exposure == other.exposure
+      and self.focal_length == other.focal_length
+      and self.f_stop == other.f_stop
+      and self.iso_speed == other.iso_speed
+      and self.latitude == other.latitude
+      and self.longitude == other.longitude
+      and self.modified_timestamp == other.modified_timestamp
+      and self.orientation == other.orientation
+      and self.original_height == other.original_height
+      and self.original_width == other.original_width
+      and _are_equal_or_one_is_none(self.taken_timestamp, other.taken_timestamp)
+    )
+
+  def merge(self, other: MediaMetaData) -> MediaMetaData:
+    if self == other:
+      return self
+    elif not self.is_mergeable_with(other):
+      raise MergeError('Unable to merge media metadata', self, other)
+
+    taken = _if_not_none_or(self.taken_timestamp, other.taken_timestamp)
+    return dataclasses.replace(self, taken_timestamp=taken)
+
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> MediaMetaData:
     """
@@ -370,7 +423,7 @@ class Media:
   video, it is hoisted into the media record during ingestion.
   """
 
-  upload_ip: str = ''
+  upload_ip: Optional[str] = None
   """
   The IP address from which the photo or video was uploaded from. In the
   original Facebook post data, this attribute is part of the  ``photo_metadata``
@@ -388,29 +441,37 @@ class Media:
     """
     Determine whether this media object can be merged with the other media
     object. That is the case if both media objects have the same field values
-    with exception of comments, which may be omitted from one of the two media
-    objects.
+    with exception of :py:attr:`comments`, :py:attr:`metadata`,
+    :py:attr:`title`, and :py:attr:`upload_ip`, which may be omitted from one of
+    the two media objects. The exceptions account for the fact that Facebook
+    changed the fields it includes in post data over time. As a result, the same
+    post with the same media may have different fields depending on when it was
+    exported.
     """
     return (
       self.media_type == other.media_type
-      and self.upload_ip == other.upload_ip
       and self.uri == other.uri
-      and self.creation_timestamp == other.creation_timestamp
       and self.description == other.description
-      and self.metadata == other.metadata
       and self.thumbnail == other.thumbnail
-      and self.title == other.title
+      and self.creation_timestamp == other.creation_timestamp
       and self.upload_timestamp == other.upload_timestamp
+      and _are_equal_or_one_is_none(self.title, other.title)
+      and _are_equal_or_one_is_none(self.metadata, other.metadata)
+      and _are_equal_or_one_is_none(self.upload_ip, other.upload_ip)
+      and _are_equal_or_one_is_empty(self.comments, other.comments)
       and (
-        self.comments == other.comments
-        or (len(self.comments) > 0 and len(other.comments) == 0)
-        or (len(self.comments) == 0 and len(other.comments) > 0)
+        self.metadata is None # Merges with any value
+        or self.metadata.is_mergeable_with(other.metadata)
       )
     )
 
   def merge(self, other: Media) -> Media:
     """
-    Merge this media object with the other media object.
+    Merge this media object with the other media object. If the two media
+    objects are not equal but nonetheless mergeable according to
+    :py:meth:`is_mergeable_with`, this method returns a new media object with
+    the truthy :py:attr:`comments`, :py:attr:`metadata`, :py:attr:`title`, and
+    :py:attr:`upload_ip` values from either media object.
 
     :raises MergeError: indicates that the two media objects are not mergeable.
     """
@@ -418,12 +479,27 @@ class Media:
       return self
     elif not self.is_mergeable_with(other):
       raise MergeError('Unable to merge media descriptors', self, other)
-    elif self.comments and not other.comments:
-      return self
-    elif not self.comments and other.comments:
-      return other
+
+    comments = tuple(self.comments or other.comments)
+
+    metadata: Optional[MediaMetaData]
+    if self.metadata is None:
+      metadata = other.metadata
+    elif other.metadata is None:
+      metadata = self.metadata
     else:
-      assert False
+      metadata = self.metadata.merge(other.metadata)
+
+    title = _if_not_none_or(self.title, other.title)
+    upload_ip = _if_not_none_or(self.upload_ip, other.upload_ip)
+
+    return dataclasses.replace(
+      self,
+      comments=comments,
+      metadata=metadata,
+      title=title,
+      upload_ip=upload_ip,
+    )
 
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Media:
@@ -517,26 +593,34 @@ class Post:
   def is_mergeable_with(self, other: Post) -> bool:
     """
     Determine whether this post can be merged with the given post. The two posts
-    are mergeable if they differ in their media at most.
+    are mergeable if they have the same field values with exception of the
+    :py:attr:`title` and :py:attr:`update_timestamp`, which may be omitted from
+    one of the two posts, as well as the :py:attr:`media`, which may diverge
+    entirely. The exceptions account for the fact that Facebook may export the
+    same post repeatedly but with different media objects instead of a single
+    post with all those media objects. Furthermore, the fields included with a
+    post may vary as well. As a result, the same post may be represented
+    differently depending on when it was exported.
     """
     return (
       self.tags == other.tags
       and self.timestamp == other.timestamp
-      and self.backdated_timestamp == other.backdated_timestamp
       and self.event == other.event
       and self.external_context == other.external_context
       and self.name == other.name
       and self.places == other.places
       and self.post == other.post
-      and self.title == other.title
-      and self.update_timestamp == other.update_timestamp
+      and _are_equal_or_one_is_none(self.backdated_timestamp, other.backdated_timestamp)
+      and _are_equal_or_one_is_none(self.title, other.title)
+      and _are_equal_or_one_is_none(self.update_timestamp, other.update_timestamp)
     )
 
   def merge(self, other: Post) -> Post:
     """
-    Merge this post with the other post. If the two posts differ only in their
-    media, this method returns a new post that combines the media from both
-    posts.
+    Merge this post with the other post. If the two posts are not equal but
+    nonetheless mergeable according to :py:meth:`is_mergeable_with`, this method
+    returns a new post with the truthy :py:attr:`media`, :py:attr:`title`, or
+    :py:attr:`update_timestamp` values from either media object.
 
     :raises MergeError: indicates that the two posts differ in more than their
       media or have different media descriptors for the same photo or video.
@@ -566,7 +650,18 @@ class Post:
       collect(media)
     for media in other.media:
       collect(media)
-    return dataclasses.replace(self, media=tuple(by_uri.values()))
+
+    backdated = _if_not_none_or(self.backdated_timestamp, other.backdated_timestamp)
+    title = _if_not_none_or(self.title, other.title)
+    update = _if_not_none_or(self.update_timestamp, other.update_timestamp)
+
+    return dataclasses.replace(
+      self,
+      media=tuple(by_uri.values()),
+      backdated_timestamp=backdated,
+      title=title,
+      update_timestamp=update,
+    )
 
   @classmethod
   def from_dict(cls, data: dict[str, Any]) -> Post:
