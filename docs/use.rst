@@ -1,5 +1,5 @@
-Command Line
-============
+Command Line Use
+================
 
 .. sphinx_argparse_cli::
    :module: deface.cli

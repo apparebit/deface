@@ -31,18 +31,19 @@ I made just that case in `an invited talk <https://youtu.be/iYJQSfQGDEE>`_ at
    self
 
 .. toctree::
-   :caption: Background:
+   :caption: Background
 
    motivation
    design
-   changelog
 
 .. toctree::
-   :caption: Usage:
+   :caption: Code
    :maxdepth: 2
 
-   install
-   cli
+   changelog
+   installation
+   use
+   testing
    api
 
 .. toctree::

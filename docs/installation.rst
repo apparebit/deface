@@ -4,6 +4,10 @@ Installation
 *deface* has no dependencies outside Python's standard library. It does,
 however, require **Python 3.9 or later**.
 
+
+As Command Line Tool
+--------------------
+
 To install *deface* into your current Python environment, simply execute:
 
 .. code-block:: shell
@@ -18,18 +22,18 @@ That makes the ``deface`` command available in your shell. Try running it:
    deface 1.0.0
 
 
-Use as Library
---------------
+As Library
+----------
 
 As long you comply by the terms of the license, you can also use *deface* as a
-library within your own code. Notably, that enables you to use the model classes
-for representing cleaned up and simplified posts. To this end, you install the
-package just the same. Just remember to add the dependency to your project's
+library within your own code. That includes using the model classes to represent
+cleaned up and simplified posts. The above instructions for installing *deface*
+apply just the same. Just remember to add the dependency to your project's
 ``requirements.txt`` or ``pyproject.toml``.
 
 
-Modify Source Code
-------------------
+For Development
+---------------
 
 While *deface* has no runtime dependencies outside Python's standard library, it
 does have several buildtime dependencies, e.g., for checking types, generating
@@ -43,13 +47,11 @@ use any package manager supporting that convention, such as `flit
 run.py
 ^^^^^^
 
-You can also use the ``run.py`` script in the repository root. Unless you are
-already running the script in a virtual environment, it automatically bootstraps
-a virtual environment for the project and installs all necessary
-development-only dependencies. From then on out, it ensures that Python scripts
-execute within the virtual environment, even if the commands are not obviously
-written in Python. You do not need to activate the virtual environment as long
-as you use ``run.py`` for running tasks.
+You can also use the ``run.py`` script in the repository root. It automatically
+sets up a virtual environment for the project and installs all necessary
+buildtime dependencies. From then on out, it ensures that Python scripts execute
+within that virtual environment. Even better, you do not need to activate the
+virtual environment. ``run.py`` takes care of that for you.
 
 To find out more about supported commands and their options, please check out
 ``run.py``'s help message:
@@ -66,15 +68,17 @@ To find out more about supported commands and their options, please check out
    Execute ``./run.py -h`` in your terminal to see the list of supported
    commands and their (short) descriptions.
 
-``run.py`` has commands for all development tasks from bootstrap to making a
-release. Yet it also has *no* external dependencies (beyond Python and pip) and
-comprises a little more than 500 well-documented and -structured lines of code.
-Hence, if the need arises, you can easily modify existing commands or add
-entirely new ones yourself.
+``run.py`` has commands for all development tasks ranging from initial setup to
+making a release. Nonetheless, it has no runtime requirement beyond Python since
+it installs all packages needed, including the package manager, itself. At the
+same time, it comprises only a little more than 500 well-documented and
+well-structured lines of code. Hence you can easily modify existing commands or
+add new ones yourself.
 
 To do so, look for the ``@command`` decorator. It registers a function as
-implementation for a command of the same name. The function can either take no
+implementation of a command with the same name. The function can either take no
 arguments — a so-called *simple* command — or arbitrarily many positional
 arguments — a so-called *special* command. ``run.py`` can execute any number of
 simple commands per invocation. But it can only ever execute one special
-command, since that command receives all arguments following the command name.
+command, since ``run.py`` passes through all arguments following the command
+name to the implementation.
