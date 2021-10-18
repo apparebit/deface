@@ -2,15 +2,15 @@ Changelog
 =========
 
 **0.9.0** (xx October, 2021)
-  * Expand module-level documentation (*documentation*)
-  * Refactor non-model code from :py:mod:`deface.model` into :py:mod:`deface.ingest`
-    (*code quality*)
-  * Improve accuracy of type annotations for :py:class:`deface.validator.Validator`
-    (*code quality*)
-  * Add ``HOME`` to subprocess environment in ``run.py`` so that git finds
-    configuration (*bug fix*)
-  * Update ``run.py`` commands, also improve its verbose mode and error reporting
-    (*tooling*)
+  * Automatically merge many more posts, media objects, and media metadata
+    (*feature*)
+  * Explain and document progress on corpus of my own Facebook posts (*validation*)
+  * Refactor non-model code from :py:mod:`deface.model` and improve type annotations
+    for :py:mod:`deface.validator` (*code quality*)
+  * Transfer more Posix environment variables, including ``HOME``, to subprocess
+    so that `git` can find its configuration (*bug fix*)
+  * Update ``run.py`` commands, also improve its verbose mode and error
+    reporting (*tooling*)
 
 **0.8.0** (7 October, 2021)
   * Support older version of posts file, which does not contain an array of posts
