@@ -5,6 +5,7 @@
     "exif",
     "isatty",
     "mojibake",
+    "Posix",
     "println",
     "pyproject",
     "pyvenv",
